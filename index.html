@@ -836,12 +836,15 @@
         /* ========== 拖拽排序相关 ========== */
         .drag-item {
             touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
             position: relative;
             transition: transform 0.15s, opacity 0.15s;
         }
         .drag-item.dragging {
-            opacity: 0.4;
-            transform: scale(0.97);
+            opacity: 0.3;
+            /* 不缩放，避免重叠模糊 */
         }
         .drag-item.drag-over-top {
             box-shadow: inset 0 4px 0 0 var(--primary);
@@ -1255,149 +1258,231 @@ function closeImageViewer() {
 }
 
 // ========== 长按拖拽排序（通用） ==========
+// 全局拖拽状态（避免多个 item 各自维护状态导致冲突）
+let dragState = {
+    isDragging: false,
+    ghost: null,
+    currentItem: null,
+    container: null,
+    dataArray: null,
+    renderFn: null,
+    periodKey: null,
+    startX: 0,
+    startY: 0,
+    longPressTimer: null,
+    currentOverItem: null,
+    placeholderPos: null
+};
+
+function clearDragVisuals() {
+    if (dragState.ghost && dragState.ghost.parentNode) {
+        dragState.ghost.parentNode.removeChild(dragState.ghost);
+    }
+    if (dragState.currentItem) {
+        dragState.currentItem.classList.remove('dragging');
+        dragState.currentItem.style.opacity = '';
+    }
+    if (dragState.currentOverItem) {
+        dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+    }
+}
+
+function startDragging(item, container, dataArray, renderFn, periodKey) {
+    if (dragState.isDragging) return; // 防重入
+    dragState.isDragging = true;
+    dragState.currentItem = item;
+    dragState.container = container;
+    dragState.dataArray = dataArray;
+    dragState.renderFn = renderFn;
+    dragState.periodKey = periodKey;
+    item.classList.add('dragging');
+    const rect = item.getBoundingClientRect();
+    dragState.ghost = document.createElement('div');
+    dragState.ghost.classList.add('drag-ghost');
+    const titleEl = item.querySelector('.guide-title, .outfit-title, span[style*="font-weight:700"], .note-text');
+    const title = titleEl ? titleEl.textContent.trim().substring(0, 20) : '拖动中...';
+    dragState.ghost.innerHTML = `<div style="padding:14px 16px;background:#fff;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,0.25);font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px;border:2px solid var(--primary);"><span style="font-size:20px;color:var(--primary)">≡</span> <span>${title}</span></div>`;
+    dragState.ghost.style.position = 'fixed';
+    dragState.ghost.style.zIndex = '9999';
+    dragState.ghost.style.pointerEvents = 'none';
+    dragState.ghost.style.width = 'auto';
+    dragState.ghost.style.maxWidth = '90vw';
+    dragState.ghost.style.left = rect.left + 'px';
+    dragState.ghost.style.top = rect.top + 'px';
+    document.body.appendChild(dragState.ghost);
+    item.style.opacity = '0.2';
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function moveGhost(clientX, clientY) {
+    if (!dragState.isDragging || !dragState.ghost) return;
+    // ghost 中心点
+    dragState.ghost.style.left = (clientX - 60) + 'px';
+    dragState.ghost.style.top = (clientY - 30) + 'px';
+
+    // 临时隐藏 ghost 来检测下方的元素
+    const originalPointerEvents = dragState.ghost.style.pointerEvents;
+    dragState.ghost.style.pointerEvents = 'none';
+    dragState.ghost.style.visibility = 'hidden';
+    const elBelow = document.elementFromPoint(clientX, clientY);
+    dragState.ghost.style.pointerEvents = originalPointerEvents;
+    dragState.ghost.style.visibility = '';
+    
+    const overItem = elBelow ? elBelow.closest('.drag-item') : null;
+    // 关键：忽略 ghost 元素自己（虽然 visibility:hidden 应该已经过滤，但保险起见）
+    if (overItem === dragState.ghost) return;
+    
+    if (overItem && overItem !== dragState.currentItem && dragState.container.contains(overItem)) {
+        if (dragState.periodKey && overItem.dataset.period !== dragState.currentItem.dataset.period) {
+            if (dragState.currentOverItem) {
+                dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+                dragState.currentOverItem = null;
+            }
+            return;
+        }
+        if (dragState.currentOverItem && dragState.currentOverItem !== overItem) {
+            dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+        }
+        dragState.currentOverItem = overItem;
+        const overRect = overItem.getBoundingClientRect();
+        dragState.placeholderPos = (clientY - overRect.top) < (overRect.height / 2) ? 'top' : 'bottom';
+        overItem.classList.remove('drag-over-top', 'drag-over-bottom');
+        overItem.classList.add(dragState.placeholderPos === 'top' ? 'drag-over-top' : 'drag-over-bottom');
+    } else if (dragState.currentOverItem) {
+        dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+        dragState.currentOverItem = null;
+    }
+}
+
+function endDrag() {
+    if (dragState.longPressTimer) {
+        clearTimeout(dragState.longPressTimer);
+        dragState.longPressTimer = null;
+    }
+    if (!dragState.isDragging) return;
+
+    if (dragState.currentOverItem) {
+        dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+        const fromIdx = parseInt(dragState.currentItem.dataset.index);
+        let toIdx = parseInt(dragState.currentOverItem.dataset.index);
+        if (dragState.dataArray && fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) {
+            const moved = dragState.dataArray.splice(fromIdx, 1)[0];
+            if (dragState.placeholderPos === 'bottom') toIdx = toIdx + 1;
+            if (toIdx > fromIdx) toIdx = toIdx - 1;
+            dragState.dataArray.splice(toIdx, 0, moved);
+            saveStore();
+            showToast('✅ 已调整顺序');
+            const fn = dragState.renderFn;
+            clearDragVisuals();
+            dragState.isDragging = false;
+            dragState.currentItem = null;
+            dragState.currentOverItem = null;
+            if (typeof fn === 'function') fn();
+            return;
+        }
+    }
+    clearDragVisuals();
+    dragState.isDragging = false;
+    dragState.currentItem = null;
+    dragState.currentOverItem = null;
+    dragState.ghost = null;
+}
+
+// 鼠标 mousemove/mouseup 处理函数（避免重复绑定）
+let _docMouseMoveHandler = null;
+let _docMouseUpHandler = null;
+
 function initDragSort(container, dataArray, renderFn, storeKey, periodKey) {
     if (!container) return;
     const items = container.querySelectorAll('.drag-item');
-    items.forEach(item => {
-        let longPressTimer = null;
-        let isDragging = false;
-        let ghost = null;
-        let startX = 0, startY = 0;
-        let currentOverItem = null;
-        let placeholderPos = null; // 'top' or 'bottom'
 
-        // 阻止按钮长按默认弹出菜单
+    // 清理旧的 document 级事件监听器
+    if (_docMouseMoveHandler) document.removeEventListener('mousemove', _docMouseMoveHandler);
+    if (_docMouseUpHandler) document.removeEventListener('mouseup', _docMouseUpHandler);
+
+    // 创建新的 document 级事件监听器
+    _docMouseMoveHandler = e => {
+        if (dragState.isDragging) moveGhost(e.clientX, e.clientY);
+    };
+    _docMouseUpHandler = () => {
+        if (dragState.isDragging) endDrag();
+    };
+    document.addEventListener('mousemove', _docMouseMoveHandler);
+    document.addEventListener('mouseup', _docMouseUpHandler);
+
+    items.forEach(item => {
+        // 阻止按钮长按弹出菜单
         item.querySelectorAll('button, input, textarea').forEach(el => {
             el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
         });
 
-        const startDrag = (clientX, clientY, target) => {
-            startX = clientX;
-            startY = clientY;
-            longPressTimer = setTimeout(() => {
-                isDragging = true;
-                item.classList.add('dragging');
-                // 创建拖拽幽灵元素
-                const rect = item.getBoundingClientRect();
-                ghost = item.cloneNode(true);
-                ghost.className = 'drag-ghost drag-item';
-                ghost.style.width = rect.width + 'px';
-                ghost.style.left = (rect.left) + 'px';
-                ghost.style.top = (rect.top) + 'px';
-                ghost.style.position = 'fixed';
-                document.body.appendChild(ghost);
-                if (navigator.vibrate) navigator.vibrate(30);
-            }, 400);
+        const startTimer = (clientX, clientY) => {
+            if (dragState.isDragging) return;
+            dragState.startX = clientX;
+            dragState.startY = clientY;
+            dragState.longPressTimer = setTimeout(() => {
+                dragState.longPressTimer = null;
+                startDragging(item, container, dataArray, renderFn, periodKey);
+            }, 300);
         };
 
-        const moveDrag = (clientX, clientY) => {
-            if (longPressTimer && !isDragging) {
-                // 长按未触发前移动则取消
-                const dx = Math.abs(clientX - startX);
-                const dy = Math.abs(clientY - startY);
-                if (dx > 10 || dy > 10) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-                return;
+        const cancelTimer = () => {
+            if (dragState.longPressTimer) {
+                clearTimeout(dragState.longPressTimer);
+                dragState.longPressTimer = null;
             }
-            if (!isDragging || !ghost) return;
-            // 移动 ghost
-            const rect = item.getBoundingClientRect();
-            ghost.style.left = (parseFloat(ghost.dataset.baseLeft || rect.left) + (clientX - startX)) + 'px';
-            ghost.style.top = (parseFloat(ghost.dataset.baseTop || rect.top) + (clientY - startY)) + 'px';
-            if (!ghost.dataset.baseLeft) {
-                ghost.dataset.baseLeft = rect.left;
-                ghost.dataset.baseTop = rect.top;
-            }
-
-            // 检测悬停目标
-            const elBelow = document.elementFromPoint(clientX, clientY);
-            const overItem = elBelow ? elBelow.closest('.drag-item') : null;
-            if (overItem && overItem !== item && container.contains(overItem)) {
-                // 限制同一时段内拖拽（饮食板块）
-                if (periodKey && overItem.dataset.period !== item.dataset.period) {
-                    if (currentOverItem) {
-                        currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
-                        currentOverItem = null;
-                    }
-                    return;
-                }
-                if (currentOverItem && currentOverItem !== overItem) {
-                    currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
-                }
-                currentOverItem = overItem;
-                const overRect = overItem.getBoundingClientRect();
-                placeholderPos = (clientY - overRect.top) < (overRect.height / 2) ? 'top' : 'bottom';
-                overItem.classList.remove('drag-over-top', 'drag-over-bottom');
-                overItem.classList.add(placeholderPos === 'top' ? 'drag-over-top' : 'drag-over-bottom');
-            } else if (currentOverItem) {
-                currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
-                currentOverItem = null;
-            }
-        };
-
-        const endDrag = () => {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-            if (!isDragging) return;
-            isDragging = false;
-            item.classList.remove('dragging');
-            if (currentOverItem) {
-                currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
-                const fromIdx = parseInt(item.dataset.index);
-                let toIdx = parseInt(currentOverItem.dataset.index);
-                if (dataArray && fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) {
-                    // 移动数组元素
-                    const moved = dataArray.splice(fromIdx, 1)[0];
-                    if (placeholderPos === 'bottom') toIdx = toIdx + 1;
-                    if (toIdx > fromIdx) toIdx = toIdx - 1;
-                    dataArray.splice(toIdx, 0, moved);
-                    saveStore();
-                    showToast('✅ 已调整顺序');
-                    // 重新渲染
-                    if (typeof renderFn === 'function') renderFn();
-                    return; // renderFn 已重新渲染，DOM 元素已失效
-                }
-                currentOverItem = null;
-            }
-            // 清理 ghost
-            if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
-            ghost = null;
-        };
-
-        const cancelDrag = () => {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-            if (isDragging) endDrag();
         };
 
         // 触摸事件
         item.addEventListener('touchstart', e => {
-            if (e.target.closest('button, input, textarea, select')) {
-                // 按钮上不触发拖拽
-                return;
-            }
+            const target = e.target;
+            const isHandle = target.classList && target.classList.contains('drag-handle');
+            const isButton = target.closest && target.closest('button, input, textarea, select');
+            if (isButton && !isHandle) return;
+            if (isHandle) e.preventDefault();
             const t = e.touches[0];
-            startDrag(t.clientX, t.clientY, e.target);
-        }, { passive: true });
+            startTimer(t.clientX, t.clientY);
+        }, { passive: false });
 
         item.addEventListener('touchmove', e => {
             const t = e.touches[0];
-            moveDrag(t.clientX, t.clientY);
-        }, { passive: true });
+            const dx = Math.abs(t.clientX - dragState.startX);
+            const dy = Math.abs(t.clientY - dragState.startY);
+            if (dragState.longPressTimer && !dragState.isDragging && (dx > 8 || dy > 8)) {
+                cancelTimer();
+                dragState.longPressTimer = setTimeout(() => {
+                    dragState.longPressTimer = null;
+                    startDragging(item, container, dataArray, renderFn, periodKey);
+                }, 150);
+            }
+            if (dragState.isDragging) {
+                e.preventDefault();
+                moveGhost(t.clientX, t.clientY);
+            }
+        }, { passive: false });
 
-        item.addEventListener('touchend', () => endDrag());
-        item.addEventListener('touchcancel', () => cancelDrag());
+        item.addEventListener('touchend', e => {
+            cancelTimer();
+            if (dragState.isDragging) {
+                e.preventDefault();
+                endDrag();
+            }
+        }, { passive: false });
 
-        // 鼠标事件（电脑端支持）
-        item.addEventListener('mousedown', e => {
-            if (e.target.closest('button, input, textarea, select')) return;
-            startDrag(e.clientX, e.clientY, e.target);
+        item.addEventListener('touchcancel', () => {
+            cancelTimer();
+            if (dragState.isDragging) endDrag();
         });
-        item.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
-        item.addEventListener('mouseup', () => endDrag());
-        item.addEventListener('mouseleave', () => cancelDrag());
+
+        // 鼠标事件
+        item.addEventListener('mousedown', e => {
+            const target = e.target;
+            const isHandle = target.classList && target.classList.contains('drag-handle');
+            const isButton = target.closest && target.closest('button, input, textarea, select');
+            if (isButton && !isHandle) return;
+            e.preventDefault();
+            startTimer(e.clientX, e.clientY);
+        });
     });
 }
 
@@ -2158,9 +2243,8 @@ function renderGuides() {
                 <button class="delete-btn" onclick="event.stopPropagation(); deleteGuide(${i})" style="font-size:13px;">🗑️ 删除</button>
             </div>
         </div>
-    `).join('');
+    `).join('') + '<button class="add-city-btn" onclick="addGuidePrompt()" style="margin-top:12px;">➕ 添加攻略</button>';
     initDragSort(list, store.guides, renderGuides, 'guides');
-    list.innerHTML += '<button class="add-city-btn" onclick="addGuidePrompt()" style="margin-top:12px;">➕ 添加攻略</button>';
 }
 
 function addGuidePrompt() {
