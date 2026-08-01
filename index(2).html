@@ -1,0 +1,3362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="工作台">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-180.png">
+    <link rel="icon" type="image/png" href="./icon-192.png">
+    <title>我的工作台</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --bg: #e8f5e9;
+            --card-bg: #ffffff;
+            --text: #1a1a2e;
+            --text-light: #6c7293;
+            --border: #c8e6c9;
+            --success: #48bb78;
+            --warning: #f6ad55;
+            --danger: #f56565;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-lg: 0 4px 20px rgba(0,0,0,0.12);
+            --radius: 12px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            /* 类目主题色 */
+            --c-exercise: #ff7043;
+            --c-exercise-bg: #fbe9e7;
+            --c-weight: #42a5f5;
+            --c-weight-bg: #e3f2fd;
+            --c-travel: #66bb6a;
+            --c-travel-bg: #e8f5e9;
+            --c-notes: #ab47bc;
+            --c-notes-bg: #f3e5f5;
+            --c-outfit: #ec407a;
+            --c-outfit-bg: #fce4ec;
+            --c-diet: #ff9800;
+            --c-diet-bg: #fff3e0;
+            --c-finance: #26a69a;
+            --c-finance-bg: #e0f2f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        /* 顶部标题栏 */
+        .header {
+            background: linear-gradient(135deg, #43a047, #66bb6a);
+            color: #fff;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            flex-shrink: 0;
+            letter-spacing: 1px;
+            box-shadow: var(--shadow);
+        }
+
+        /* 主容器 */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左侧导航 */
+        .sidebar {
+            width: 78px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            gap: 6px;
+            color: var(--text-light);
+        }
+
+        .nav-item .icon {
+            font-size: 22px;
+        }
+
+        .nav-item .label {
+            font-size: 10px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .nav-item.active {
+            background: var(--nav-active-bg, rgba(102,126,234,0.1));
+            border-left-color: var(--nav-color, var(--primary));
+            color: var(--nav-color, var(--primary));
+        }
+
+        .nav-item[data-page="exercise"] { --nav-color: var(--c-exercise); --nav-active-bg: var(--c-exercise-bg); }
+        .nav-item[data-page="weight"] { --nav-color: var(--c-weight); --nav-active-bg: var(--c-weight-bg); }
+        .nav-item[data-page="travel"] { --nav-color: var(--c-travel); --nav-active-bg: var(--c-travel-bg); }
+        .nav-item[data-page="notes"] { --nav-color: var(--c-notes); --nav-active-bg: var(--c-notes-bg); }
+        .nav-item[data-page="outfit"] { --nav-color: var(--c-outfit); --nav-active-bg: var(--c-outfit-bg); }
+        .nav-item[data-page="diet"] { --nav-color: var(--c-diet); --nav-active-bg: var(--c-diet-bg); }
+        .nav-item[data-page="finance"] { --nav-color: var(--c-finance); --nav-active-bg: var(--c-finance-bg); }
+
+        .nav-item:hover {
+            background: rgba(0,0,0,0.03);
+        }
+
+        /* 右侧内容区 */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        /* 页面标题 */
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 卡片 */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ========== 运动页面 ========== */
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .exercise-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: var(--shadow);
+            border: 2px solid transparent;
+        }
+
+        .exercise-card:active {
+            transform: scale(0.96);
+        }
+
+        .exercise-card .ex-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .exercise-card .ex-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .exercise-card .ex-info {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .exercise-card.completed {
+            background: linear-gradient(135deg, rgba(72,187,120,0.15), rgba(72,187,120,0.05));
+            border-color: var(--success);
+        }
+
+        .exercise-card.completed .ex-status {
+            color: var(--success);
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .today-summary {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .summary-item .num {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--c-exercise);
+        }
+
+        .summary-item .lbl {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        /* 运动记录弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:active {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* ========== 体重页面 ========== */
+        .weight-input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .weight-input-item label {
+            font-size: 12px;
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .weight-input-item .time-tag {
+            font-size: 11px;
+            color: #fff;
+            text-align: center;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .time-morning { background: #f6ad55; }
+        .time-noon { background: #4299e1; }
+        .time-evening { background: #553c9a; }
+
+        .weight-input-item input {
+            width: 100%;
+            padding: 8px 6px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .weight-input-item input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .weight-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .weight-record {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .weight-record .date {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .weight-record .values {
+            display: flex;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .weight-record .value-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .weight-record .value-item .v-label {
+            font-size: 10px;
+            color: var(--text-light);
+        }
+
+        .weight-record .value-item .v-num {
+            font-weight: 600;
+        }
+
+        .weight-record .avg {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .weight-record .avg .v-num {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px 8px;
+        }
+
+        /* 体重趋势图 */
+        .weight-chart {
+            width: 100%;
+            height: 180px;
+            position: relative;
+        }
+
+        /* ========== 旅行页面 ========== */
+        .travel-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .travel-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: var(--card-bg);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+        }
+
+        .travel-tab.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .city-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .city-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 14px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .city-card .city-icon {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .city-card .city-name {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .city-card .city-date {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .city-card .city-delete {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0.5;
+        }
+
+        .city-card.visited {
+            background: linear-gradient(135deg, rgba(72,187,120,0.1), rgba(72,187,120,0.02));
+        }
+
+        .city-card.planning {
+            background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(102,126,234,0.02));
+        }
+
+        .add-city-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--border);
+            background: transparent;
+            color: var(--text-light);
+            font-size: 13px;
+            cursor: pointer;
+            min-height: 90px;
+            border-radius: var(--radius);
+        }
+
+        .add-city-btn:active {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* 旅游攻略 */
+        .guide-section {
+            margin-top: 8px;
+        }
+
+        .guide-item {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .guide-item .guide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .guide-item .guide-title {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .guide-item .guide-city {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .guide-item .guide-content {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .guide-item .guide-tag {
+            display: inline-block;
+            background: rgba(102,126,234,0.1);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-right: 4px;
+            margin-top: 6px;
+        }
+
+        /* ========== 备忘录页面 ========== */
+        .note-input-area {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .note-input-area input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .note-input-area input:focus {
+            border-color: var(--primary);
+        }
+
+        .note-add-btn {
+            padding: 10px 16px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .note-add-btn:active {
+            background: var(--primary-dark);
+        }
+
+        .note-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .note-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .note-item.done {
+            opacity: 0.5;
+        }
+
+        .note-item.done .note-text {
+            text-decoration: line-through;
+        }
+
+        .note-check {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+            font-size: 12px;
+            color: transparent;
+            transition: all 0.2s;
+        }
+
+        .note-check.checked {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+
+        .note-text {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .note-time {
+            font-size: 11px;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+
+        .note-del {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 4px;
+            opacity: 0.4;
+        }
+
+        .note-del:active {
+            opacity: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* 底部添加按钮 */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #43a047, #66bb6a);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 26px;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .fab.show {
+            display: flex;
+        }
+
+        .fab:active {
+            transform: scale(0.92);
+        }
+
+        /* 页面切换 */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* 确认提示 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.75);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* ========== 图片查看器（点击放大） ========== */
+        .image-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            flex-direction: column;
+        }
+        .image-viewer.show {
+            display: flex;
+        }
+        .image-viewer img {
+            max-width: 100%;
+            max-height: calc(100vh - 100px);
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        .image-viewer-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: #fff;
+            font-size: 32px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10001;
+        }
+        .image-viewer-hint {
+            color: #fff;
+            font-size: 13px;
+            margin-top: 16px;
+            opacity: 0.7;
+        }
+        /* 可点击放大的图片 */
+        .zoomable-img {
+            cursor: zoom-in;
+        }
+
+        /* ========== 拖拽排序相关 ========== */
+        .drag-item {
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            position: relative;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        .drag-item.dragging {
+            opacity: 0.3;
+            /* 不缩放，避免重叠模糊 */
+        }
+        .drag-item.drag-over-top {
+            box-shadow: inset 0 4px 0 0 var(--primary);
+        }
+        .drag-item.drag-over-bottom {
+            box-shadow: inset 0 -4px 0 0 var(--primary);
+        }
+        .drag-handle {
+            display: inline-block;
+            color: var(--text-light);
+            font-size: 14px;
+            margin-left: 6px;
+            cursor: grab;
+            user-select: none;
+            opacity: 0.6;
+        }
+        .drag-hint {
+            font-size: 11px;
+            color: var(--text-light);
+            text-align: center;
+            padding: 4px 0 8px;
+            opacity: 0.7;
+        }
+        .drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.85;
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+        }
+
+        /* 添加手机端适配 */
+        @media (max-width: 380px) {
+            .sidebar {
+                width: 68px;
+            }
+            .nav-item .label {
+                font-size: 10px;
+            }
+            .nav-item .icon {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">📋 我的工作台</div>
+    <div class="container">
+        <!-- 左侧导航 -->
+        <div class="sidebar">
+            <div class="nav-item active" data-page="exercise">
+                <span class="icon">🏃</span>
+                <span class="label">运动</span>
+            </div>
+            <div class="nav-item" data-page="weight">
+                <span class="icon">⚖️</span>
+                <span class="label">体重</span>
+            </div>
+            <div class="nav-item" data-page="travel">
+                <span class="icon">✈️</span>
+                <span class="label">旅行</span>
+            </div>
+            <div class="nav-item" data-page="outfit">
+                <span class="icon">👗</span>
+                <span class="label">穿搭</span>
+            </div>
+            <div class="nav-item" data-page="diet">
+                <span class="icon">🍽️</span>
+                <span class="label">饮食</span>
+            </div>
+            <div class="nav-item" data-page="finance">
+                <span class="icon">💰</span>
+                <span class="label">记账</span>
+            </div>
+            <div class="nav-item" data-page="notes">
+                <span class="icon">📝</span>
+                <span class="label">备忘录</span>
+            </div>
+        </div>
+
+        <!-- 右侧内容区 -->
+        <div class="content">
+            <!-- 运动页面 -->
+            <div class="page active" id="page-exercise">
+                <div class="page-title">🏃 运动记录</div>
+                <div class="card">
+                    <div class="card-title">📊 今日概览</div>
+                    <div class="today-summary">
+                        <div class="summary-item">
+                            <div class="num" id="todayCount">0</div>
+                            <div class="lbl">已完成项</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="num" id="todayMinutes">0</div>
+                            <div class="lbl">运动分钟</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="num" id="todayCalories">0</div>
+                            <div class="lbl">消耗(大卡)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💪 运动项目</div>
+                    <div class="exercise-grid" id="exerciseGrid">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📅 近期记录</div>
+                    <div id="exerciseLog">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 体重页面 -->
+            <div class="page" id="page-weight">
+                <div class="page-title">⚖️ 体重管理</div>
+                <div class="card">
+                    <div class="card-title">🎯 体重目标</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; text-align:center;">
+                        <div style="background:var(--c-weight-bg); border-radius:10px; padding:14px 6px;">
+                            <div style="font-size:11px; color:var(--text-light); margin-bottom:4px;">📋 原有体重</div>
+                            <div style="font-size:22px; font-weight:700; color:var(--c-weight);" id="originWeightDisplay">未设置</div>
+                            <div style="font-size:11px; color:var(--text-light);">公斤</div>
+                        </div>
+                        <div style="background:var(--c-weight-bg); border-radius:10px; padding:14px 6px;">
+                            <div style="font-size:11px; color:var(--text-light); margin-bottom:4px;">🎯 目标体重</div>
+                            <div style="font-size:22px; font-weight:700; color:var(--c-weight);" id="targetWeightDisplay">未设置</div>
+                            <div style="font-size:11px; color:var(--text-light);">公斤</div>
+                        </div>
+                        <div style="background:var(--c-weight-bg); border-radius:10px; padding:14px 6px;">
+                            <div style="font-size:11px; color:var(--text-light); margin-bottom:4px;">📉 已瘦/增</div>
+                            <div style="font-size:22px; font-weight:700; color:var(--success);" id="lostWeightDisplay">0</div>
+                            <div style="font-size:11px; color:var(--text-light);">公斤</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:12px; background:var(--c-weight);" onclick="setWeightTarget()">⚙️ 设置体重目标</button>
+                </div>
+                <div class="card">
+                    <div class="card-title">📝 今日称重</div>
+                    <div style="text-align:center; font-size:13px; color:var(--text-light); margin-bottom:10px;" id="weightTodayDate"></div>
+                    <div class="weight-input-row">
+                        <div class="weight-input-item">
+                            <span class="time-tag time-morning">早</span>
+                            <input type="number" id="weightMorning" placeholder="0.0" step="0.1" min="0" max="300">
+                        </div>
+                        <div class="weight-input-item">
+                            <span class="time-tag time-noon">中</span>
+                            <input type="number" id="weightNoon" placeholder="0.0" step="0.1" min="0" max="300">
+                        </div>
+                        <div class="weight-input-item">
+                            <span class="time-tag time-evening">晚</span>
+                            <input type="number" id="weightEvening" placeholder="0.0" step="0.1" min="0" max="300">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveWeight()">💾 保存今日体重</button>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 体重趋势</div>
+                    <div class="weight-chart">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📋 历史记录</div>
+                    <div class="weight-list" id="weightList">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 旅行页面 -->
+            <div class="page" id="page-travel">
+                <div class="page-title">✈️ 旅行</div>
+                <div class="travel-tabs">
+                    <div class="travel-tab active" data-travel="visited">🏖️ 去过的城市</div>
+                    <div class="travel-tab" data-travel="planning">🗺️ 要去的城市</div>
+                    <div class="travel-tab" data-travel="guide">📖 旅游攻略</div>
+                </div>
+
+                <div id="travel-visited" class="travel-content">
+                    <div class="city-grid" id="visitedGrid">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <div id="travel-planning" class="travel-content" style="display:none;">
+                    <div class="city-grid" id="planningGrid">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+
+                <div id="travel-guide" class="travel-content" style="display:none;">
+                    <div class="guide-section" id="guideList">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 穿搭页面 -->
+            <div class="page" id="page-outfit">
+                <div class="page-title">👗 穿搭收藏</div>
+                <div class="card">
+                    <div class="note-input-area">
+                        <input type="text" id="outfitTitle" placeholder="穿搭标题，如：夏日清新风">
+                        <button class="note-add-btn" style="background:var(--c-outfit);" onclick="addOutfitPrompt()">📷 添加穿搭</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">👗 我的穿搭</div>
+                    <div id="outfitList"></div>
+                </div>
+            </div>
+
+            <!-- 饮食页面 -->
+            <div class="page" id="page-diet">
+                <div class="page-title">🍱 饮食日记</div>
+                <div class="card" style="text-align:center; background:linear-gradient(135deg, #fff3e0, #ffe0b2);">
+                    <div style="font-size:13px; color:var(--text-light); margin-bottom:4px;">🌿 今日饮食小记 🌿</div>
+                    <div style="font-size:12px; color:var(--text-light);">记录每一餐的美好时光~</div>
+                </div>
+                <div class="card">
+                    <div class="note-input-area">
+                        <button class="note-add-btn" style="background:var(--c-diet); width:100%;" onclick="addDietPrompt()">📷 记录一餐</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🌅 早餐</div>
+                    <div id="dietList-morning"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">☀️ 午餐</div>
+                    <div id="dietList-noon"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🌙 晚餐</div>
+                    <div id="dietList-evening"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🍓 加餐/其他</div>
+                    <div id="dietList-snack"></div>
+                </div>
+            </div>
+
+            <!-- 记账页面 -->
+            <div class="page" id="page-finance">
+                <div class="page-title">💰 记账本</div>
+                <div class="card" style="text-align:center; background:linear-gradient(135deg, #e0f2f1, #b2dfdb);">
+                    <div style="font-size:13px; color:var(--text-light); margin-bottom:4px;">🧧 精打细算 理财有道 🧧</div>
+                    <div style="font-size:12px; color:var(--text-light);">记录每笔消费，掌控财务~</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📅 选择月份</div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="month" id="financeMonth" value="" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:15px;">
+                        <button class="note-add-btn" style="background:var(--c-finance); padding:8px 14px;" onclick="changeFinanceMonth()">🔍 查询</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📊 月度概览</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                        <div style="background:var(--c-finance-bg); border-radius:10px; padding:12px 6px; text-align:center;">
+                            <div style="font-size:11px; color:var(--text-light);">💵 月总支出</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--c-finance);" id="monthTotal">¥0</div>
+                        </div>
+                        <div style="background:var(--c-finance-bg); border-radius:10px; padding:12px 6px; text-align:center;">
+                            <div style="font-size:11px; color:var(--text-light);">📅 今日支出</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--danger);" id="todayTotal">¥0</div>
+                        </div>
+                        <div style="background:var(--c-finance-bg); border-radius:10px; padding:12px 6px; text-align:center;">
+                            <div style="font-size:11px; color:var(--text-light);">📊 日均支出</div>
+                            <div style="font-size:20px; font-weight:700; color:var(--warning);" id="avgDaily">¥0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 各平台消费统计</div>
+                    <div id="platformStats"></div>
+                </div>
+                <div class="card">
+                    <div class="note-input-area">
+                        <button class="note-add-btn" style="background:var(--c-finance); width:100%;" onclick="addFinancePrompt()">➕ 记一笔消费</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📋 消费明细</div>
+                    <div id="financeList"></div>
+                </div>
+            </div>
+
+            <!-- 备忘录页面 -->
+            <div class="page" id="page-notes">
+                <div class="page-title">📝 备忘录</div>
+                <div class="card">
+                    <div class="note-input-area">
+                        <input type="text" id="noteInput" placeholder="输入备忘内容..." onkeypress="if(event.key==='Enter')addNote()">
+                        <button class="note-add-btn" onclick="addNote()">➕ 添加</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="note-list" id="noteList">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💾 数据管理</div>
+                    <button class="btn btn-primary" style="background:var(--c-finance); margin-bottom:10px;" onclick="exportData()">📤 导出备份（保存所有数据）</button>
+                    <button class="btn btn-secondary" style="margin-bottom:10px;" onclick="document.getElementById('importFile').click()">📥 导入恢复（从备份文件恢复）</button>
+                    <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+                    <button class="btn btn-secondary" style="color:var(--danger);" onclick="resetAllData()">🗑️ 重置所有数据（清空全部）</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent">
+            <!-- 动态生成 -->
+        </div>
+    </div>
+
+    <!-- 悬浮按钮 -->
+    <button class="fab" id="fab" onclick="handleFab()">+</button>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 图片查看器（点击放大） -->
+    <div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
+        <div class="image-viewer-close">✕</div>
+        <img id="viewerImg" src="" onclick="event.stopPropagation()">
+        <div class="image-viewer-hint">点击任意位置关闭</div>
+    </div>
+
+<script>
+// ============ 数据存储 ============
+const STORE_KEY = 'workbench_data';
+let store = {};
+
+function loadStore() {
+    try {
+        const data = localStorage.getItem(STORE_KEY);
+        const parsed = data ? JSON.parse(data) : {};
+        // 确保 store 是一个有效对象
+        store = (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    } catch(e) {
+        store = {};
+    }
+    // 初始化默认数据
+    if (!Array.isArray(store.exercises) || !store.exercises.length) store.exercises = [
+        { id: 1, name: '跳绳', icon: '🤸', caloriesPerMin: 13, defaultMin: 15, hasCount: true },
+        { id: 2, name: '跳操', icon: '💃', caloriesPerMin: 8, defaultMin: 30 },
+        { id: 3, name: '瑜伽', icon: '🧘', caloriesPerMin: 4, defaultMin: 40 },
+        { id: 4, name: '跑步', icon: '🏃', caloriesPerMin: 11, defaultMin: 30, hasDistance: true },
+        { id: 5, name: '骑行', icon: '🚴', caloriesPerMin: 9, defaultMin: 30, hasDistance: true },
+        { id: 6, name: '游泳', icon: '🏊', caloriesPerMin: 10, defaultMin: 30, hasDistance: true },
+    ];
+    if (!Array.isArray(store.visitedCities)) store.visitedCities = [];
+    if (!Array.isArray(store.planningCities)) store.planningCities = [];
+    if (!Array.isArray(store.guides)) store.guides = [];
+    if (!Array.isArray(store.notes)) store.notes = [];
+    if (!Array.isArray(store.exerciseRecords)) store.exerciseRecords = [];
+    if (!Array.isArray(store.weightRecords)) store.weightRecords = [];
+    if (!Array.isArray(store.outfits)) store.outfits = [];
+    if (!Array.isArray(store.diets)) store.diets = [];
+    if (!Array.isArray(store.finances)) store.finances = [];
+    
+    // 清理空字符串/无效项
+    store.visitedCities = store.visitedCities.filter(c => c && typeof c === 'object' && c.name);
+    store.planningCities = store.planningCities.filter(c => c && typeof c === 'object' && c.name);
+    console.log('数据初始化完成：', {
+        visited: store.visitedCities.length,
+        planning: store.planningCities.length
+    });
+    saveStore();
+}
+
+function saveStore() {
+    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+
+// ============ 工具函数 ============
+function getToday() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ========== 图片查看器（点击放大） ==========
+function openImageViewer(src) {
+    if (!src) return;
+    document.getElementById('viewerImg').src = src;
+    document.getElementById('imageViewer').classList.add('show');
+}
+function closeImageViewer() {
+    document.getElementById('imageViewer').classList.remove('show');
+}
+
+// ========== 长按拖拽排序（通用） ==========
+// 全局拖拽状态（避免多个 item 各自维护状态导致冲突）
+let dragState = {
+    isDragging: false,
+    ghost: null,
+    currentItem: null,
+    container: null,
+    dataArray: null,
+    renderFn: null,
+    periodKey: null,
+    startX: 0,
+    startY: 0,
+    longPressTimer: null,
+    currentOverItem: null,
+    placeholderPos: null
+};
+
+function clearDragVisuals() {
+    if (dragState.ghost && dragState.ghost.parentNode) {
+        dragState.ghost.parentNode.removeChild(dragState.ghost);
+    }
+    if (dragState.currentItem) {
+        dragState.currentItem.classList.remove('dragging');
+        dragState.currentItem.style.opacity = '';
+    }
+    if (dragState.currentOverItem) {
+        dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+    }
+}
+
+function startDragging(item, container, dataArray, renderFn, periodKey) {
+    if (dragState.isDragging) return; // 防重入
+    dragState.isDragging = true;
+    dragState.currentItem = item;
+    dragState.container = container;
+    dragState.dataArray = dataArray;
+    dragState.renderFn = renderFn;
+    dragState.periodKey = periodKey;
+    item.classList.add('dragging');
+    const rect = item.getBoundingClientRect();
+    dragState.ghost = document.createElement('div');
+    dragState.ghost.classList.add('drag-ghost');
+    const titleEl = item.querySelector('.guide-title, .outfit-title, span[style*="font-weight:700"], .note-text');
+    const title = titleEl ? titleEl.textContent.trim().substring(0, 20) : '拖动中...';
+    dragState.ghost.innerHTML = `<div style="padding:14px 16px;background:#fff;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,0.25);font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px;border:2px solid var(--primary);"><span style="font-size:20px;color:var(--primary)">≡</span> <span>${title}</span></div>`;
+    dragState.ghost.style.position = 'fixed';
+    dragState.ghost.style.zIndex = '9999';
+    dragState.ghost.style.pointerEvents = 'none';
+    dragState.ghost.style.width = 'auto';
+    dragState.ghost.style.maxWidth = '90vw';
+    dragState.ghost.style.left = rect.left + 'px';
+    dragState.ghost.style.top = rect.top + 'px';
+    document.body.appendChild(dragState.ghost);
+    item.style.opacity = '0.2';
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function moveGhost(clientX, clientY) {
+    if (!dragState.isDragging || !dragState.ghost) return;
+    // ghost 中心点
+    dragState.ghost.style.left = (clientX - 60) + 'px';
+    dragState.ghost.style.top = (clientY - 30) + 'px';
+
+    // 临时隐藏 ghost 来检测下方的元素
+    const originalPointerEvents = dragState.ghost.style.pointerEvents;
+    dragState.ghost.style.pointerEvents = 'none';
+    dragState.ghost.style.visibility = 'hidden';
+    const elBelow = document.elementFromPoint(clientX, clientY);
+    dragState.ghost.style.pointerEvents = originalPointerEvents;
+    dragState.ghost.style.visibility = '';
+    
+    const overItem = elBelow ? elBelow.closest('.drag-item') : null;
+    // 关键：忽略 ghost 元素自己（虽然 visibility:hidden 应该已经过滤，但保险起见）
+    if (overItem === dragState.ghost) return;
+    
+    if (overItem && overItem !== dragState.currentItem && dragState.container.contains(overItem)) {
+        if (dragState.periodKey && overItem.dataset.period !== dragState.currentItem.dataset.period) {
+            if (dragState.currentOverItem) {
+                dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+                dragState.currentOverItem = null;
+            }
+            return;
+        }
+        if (dragState.currentOverItem && dragState.currentOverItem !== overItem) {
+            dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+        }
+        dragState.currentOverItem = overItem;
+        const overRect = overItem.getBoundingClientRect();
+        dragState.placeholderPos = (clientY - overRect.top) < (overRect.height / 2) ? 'top' : 'bottom';
+        overItem.classList.remove('drag-over-top', 'drag-over-bottom');
+        overItem.classList.add(dragState.placeholderPos === 'top' ? 'drag-over-top' : 'drag-over-bottom');
+    } else if (dragState.currentOverItem) {
+        dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+        dragState.currentOverItem = null;
+    }
+}
+
+function endDrag() {
+    if (dragState.longPressTimer) {
+        clearTimeout(dragState.longPressTimer);
+        dragState.longPressTimer = null;
+    }
+    if (!dragState.isDragging) return;
+
+    if (dragState.currentOverItem) {
+        dragState.currentOverItem.classList.remove('drag-over-top', 'drag-over-bottom');
+        const fromIdx = parseInt(dragState.currentItem.dataset.index);
+        let toIdx = parseInt(dragState.currentOverItem.dataset.index);
+        if (dragState.dataArray && fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) {
+            const moved = dragState.dataArray.splice(fromIdx, 1)[0];
+            if (dragState.placeholderPos === 'bottom') toIdx = toIdx + 1;
+            if (toIdx > fromIdx) toIdx = toIdx - 1;
+            dragState.dataArray.splice(toIdx, 0, moved);
+            saveStore();
+            showToast('✅ 已调整顺序');
+            const fn = dragState.renderFn;
+            clearDragVisuals();
+            dragState.isDragging = false;
+            dragState.currentItem = null;
+            dragState.currentOverItem = null;
+            if (typeof fn === 'function') fn();
+            return;
+        }
+    }
+    clearDragVisuals();
+    dragState.isDragging = false;
+    dragState.currentItem = null;
+    dragState.currentOverItem = null;
+    dragState.ghost = null;
+}
+
+// 鼠标 mousemove/mouseup 处理函数（避免重复绑定）
+let _docMouseMoveHandler = null;
+let _docMouseUpHandler = null;
+
+function initDragSort(container, dataArray, renderFn, storeKey, periodKey) {
+    if (!container) return;
+    const items = container.querySelectorAll('.drag-item');
+
+    // 清理旧的 document 级事件监听器
+    if (_docMouseMoveHandler) document.removeEventListener('mousemove', _docMouseMoveHandler);
+    if (_docMouseUpHandler) document.removeEventListener('mouseup', _docMouseUpHandler);
+
+    // 创建新的 document 级事件监听器
+    _docMouseMoveHandler = e => {
+        if (dragState.isDragging) moveGhost(e.clientX, e.clientY);
+    };
+    _docMouseUpHandler = () => {
+        if (dragState.isDragging) endDrag();
+    };
+    document.addEventListener('mousemove', _docMouseMoveHandler);
+    document.addEventListener('mouseup', _docMouseUpHandler);
+
+    items.forEach(item => {
+        // 阻止按钮长按弹出菜单
+        item.querySelectorAll('button, input, textarea').forEach(el => {
+            el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+        });
+
+        const startTimer = (clientX, clientY) => {
+            if (dragState.isDragging) return;
+            dragState.startX = clientX;
+            dragState.startY = clientY;
+            dragState.longPressTimer = setTimeout(() => {
+                dragState.longPressTimer = null;
+                startDragging(item, container, dataArray, renderFn, periodKey);
+            }, 300);
+        };
+
+        const cancelTimer = () => {
+            if (dragState.longPressTimer) {
+                clearTimeout(dragState.longPressTimer);
+                dragState.longPressTimer = null;
+            }
+        };
+
+        // 触摸事件
+        item.addEventListener('touchstart', e => {
+            const target = e.target;
+            const isHandle = target.classList && target.classList.contains('drag-handle');
+            const isButton = target.closest && target.closest('button, input, textarea, select');
+            if (isButton && !isHandle) return;
+            if (isHandle) e.preventDefault();
+            const t = e.touches[0];
+            startTimer(t.clientX, t.clientY);
+        }, { passive: false });
+
+        item.addEventListener('touchmove', e => {
+            const t = e.touches[0];
+            const dx = Math.abs(t.clientX - dragState.startX);
+            const dy = Math.abs(t.clientY - dragState.startY);
+            if (dragState.longPressTimer && !dragState.isDragging && (dx > 8 || dy > 8)) {
+                cancelTimer();
+                dragState.longPressTimer = setTimeout(() => {
+                    dragState.longPressTimer = null;
+                    startDragging(item, container, dataArray, renderFn, periodKey);
+                }, 150);
+            }
+            if (dragState.isDragging) {
+                e.preventDefault();
+                moveGhost(t.clientX, t.clientY);
+            }
+        }, { passive: false });
+
+        item.addEventListener('touchend', e => {
+            cancelTimer();
+            if (dragState.isDragging) {
+                e.preventDefault();
+                endDrag();
+            }
+        }, { passive: false });
+
+        item.addEventListener('touchcancel', () => {
+            cancelTimer();
+            if (dragState.isDragging) endDrag();
+        });
+
+        // 鼠标事件
+        item.addEventListener('mousedown', e => {
+            const target = e.target;
+            const isHandle = target.classList && target.classList.contains('drag-handle');
+            const isButton = target.closest && target.closest('button, input, textarea, select');
+            if (isButton && !isHandle) return;
+            e.preventDefault();
+            startTimer(e.clientX, e.clientY);
+        });
+    });
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+    // 重置所有弹窗内按钮的 disabled 状态（防止取消后按钮卡住）
+    try {
+        document.querySelectorAll('.modal button').forEach(btn => {
+            btn.disabled = false;
+            if (btn.textContent === '保存中...') btn.textContent = '💾 保存';
+        });
+    } catch(e) {}
+    // 重置所有保存函数的 busy 锁（安全检查）
+    try {
+        if (typeof saveCity !== 'undefined' && saveCity._busy) saveCity._busy = false;
+        if (typeof saveGuide !== 'undefined' && saveGuide._busy) saveGuide._busy = false;
+        if (typeof saveOutfit !== 'undefined' && saveOutfit._busy) saveOutfit._busy = false;
+        if (typeof saveDiet !== 'undefined' && saveDiet._busy) saveDiet._busy = false;
+    } catch(e) {}
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// ============ 页面切换 ============
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + page).classList.add('active');
+        // 显示/隐藏FAB
+        const fab = document.getElementById('fab');
+        if (page === 'exercise') {
+            fab.style.display = 'flex';
+            fab.textContent = '+';
+        } else if (page === 'travel') {
+            const activeTab = document.querySelector('.travel-tab.active').dataset.travel;
+            fab.style.display = 'flex';
+            fab.textContent = '+';
+        } else if (page === 'outfit') {
+            fab.style.display = 'none';
+        } else {
+            fab.style.display = 'none';
+        }
+        // 滚动到顶部
+        document.querySelector('.content').scrollTop = 0;
+    });
+});
+
+// ============ 运动模块 ============
+function renderExercises() {
+    const grid = document.getElementById('exerciseGrid');
+    const today = getToday();
+    const todayRecords = store.exerciseRecords.filter(r => r.date === today);
+    
+    grid.innerHTML = store.exercises.map(ex => {
+        const completed = todayRecords.find(r => r.exerciseId === ex.id);
+        return `
+            <div class="exercise-card ${completed ? 'completed' : ''}" onclick="openExerciseModal(${ex.id})">
+                <div class="ex-icon">${ex.icon}</div>
+                <div class="ex-name">${ex.name}</div>
+                <div class="ex-info">≈${ex.caloriesPerMin}大卡/分钟</div>
+                ${completed ? `<div class="ex-status">✅ ${completed.minutes}分钟${completed.count ? ' · '+completed.count+'个' : ''}${completed.distance ? ' · '+completed.distance+'km' : ''}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    // 更新概览
+    const totalMin = todayRecords.reduce((s, r) => s + r.minutes, 0);
+    const totalCal = todayRecords.reduce((s, r) => s + r.calories, 0);
+    document.getElementById('todayCount').textContent = todayRecords.length;
+    document.getElementById('todayMinutes').textContent = totalMin;
+    document.getElementById('todayCalories').textContent = totalCal;
+
+    // 渲染近期记录
+    renderExerciseLog();
+}
+
+function renderExerciseLog() {
+    const log = document.getElementById('exerciseLog');
+    const recent = [...store.exerciseRecords].reverse().slice(0, 10);
+    if (recent.length === 0) {
+        log.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:20px; font-size:13px;">暂无记录，点击运动卡片开始记录</div>';
+        return;
+    }
+    log.innerHTML = recent.map(r => {
+        const ex = store.exercises.find(e => e.id === r.exerciseId);
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:20px;">${ex ? ex.icon : '🏃'}</span>
+                    <div>
+                        <div style="font-weight:600; font-size:14px;">${ex ? ex.name : '运动'}</div>
+                        <div style="font-size:12px; color:var(--text-light);">${r.date}</div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:600; font-size:14px; color:var(--c-exercise);">${r.minutes}分钟${r.count ? ' · '+r.count+'个' : ''}${r.distance ? ' · '+r.distance+'km' : ''}</div>
+                    <div style="font-size:12px; color:var(--text-light);">消耗${r.calories}大卡</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function openExerciseModal(exId) {
+    const ex = store.exercises.find(e => e.id === exId);
+    const today = getToday();
+    const existing = store.exerciseRecords.find(r => r.date === today && r.exerciseId === exId);
+    
+    document.getElementById('modalContent').innerHTML = `
+        <h3>${ex.icon} ${ex.name}</h3>
+        <div class="form-group">
+            <label>运动时长（分钟） ⏱️</label>
+            <input type="number" id="exMinutes" value="${existing ? existing.minutes : ex.defaultMin}" min="1" max="300">
+        </div>
+        ${ex.hasCount ? `<div class="form-group"><label>跳绳个数 🔢</label><input type="number" id="exCount" value="${existing ? existing.count||'' : ''}" min="0" placeholder="如：500"></div>` : ''}
+        ${ex.hasDistance ? `<div class="form-group"><label>距离（公里） 📍</label><input type="number" id="exDistance" value="${existing ? existing.distance||'' : ''}" min="0" step="0.1" placeholder="如：5.0"></div>` : ''}
+        <div class="form-group">
+            <label>预计消耗热量 🔥</label>
+            <input type="text" id="exCalories" value="" readonly style="background:var(--bg);">
+        </div>
+        <div class="form-group">
+            <label>备注（可选）</label>
+            <textarea id="exNotes" rows="2" placeholder="感受、地点等...">${existing ? (existing.notes||'') : ''}</textarea>
+        </div>
+        <div class="btn-row">
+            ${existing ? '<button class="btn btn-secondary" onclick="deleteExerciseRecord('+exId+')">🗑️ 删除</button>' : ''}
+            <button class="btn btn-primary" onclick="saveExercise(${exId})">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+    
+    // 实时计算卡路里
+    const minInput = document.getElementById('exMinutes');
+    const calInput = document.getElementById('exCalories');
+    function updateCal() {
+        calInput.value = (parseInt(minInput.value) || 0) * ex.caloriesPerMin + ' 大卡';
+    }
+    minInput.addEventListener('input', updateCal);
+    updateCal();
+}
+
+function saveExercise(exId) {
+    const minutes = parseInt(document.getElementById('exMinutes').value);
+    if (!minutes || minutes < 1) {
+        showToast('请输入有效时长');
+        return;
+    }
+    const ex = store.exercises.find(e => e.id === exId);
+    const today = getToday();
+    const notes = document.getElementById('exNotes').value.trim();
+    const calories = minutes * ex.caloriesPerMin;
+    const countEl = document.getElementById('exCount');
+    const distanceEl = document.getElementById('exDistance');
+    const count = countEl ? parseInt(countEl.value) || 0 : 0;
+    const distance = distanceEl ? parseFloat(distanceEl.value) || 0 : 0;
+    
+    const existing = store.exerciseRecords.find(r => r.date === today && r.exerciseId === exId);
+    if (existing) {
+        existing.minutes = minutes;
+        existing.calories = calories;
+        existing.notes = notes;
+        if (ex.hasCount) existing.count = count;
+        if (ex.hasDistance) existing.distance = distance;
+    } else {
+        const record = {
+            date: today,
+            exerciseId: exId,
+            minutes,
+            calories,
+            notes
+        };
+        if (ex.hasCount) record.count = count;
+        if (ex.hasDistance) record.distance = distance;
+        store.exerciseRecords.push(record);
+    }
+    saveStore();
+    closeModal();
+    renderExercises();
+    showToast('✅ 记录成功！');
+}
+
+function deleteExerciseRecord(exId) {
+    const today = getToday();
+    store.exerciseRecords = store.exerciseRecords.filter(r => !(r.date === today && r.exerciseId === exId));
+    saveStore();
+    closeModal();
+    renderExercises();
+    showToast('已删除');
+}
+
+// ============ 体重模块 ============
+function renderWeight() {
+    const today = getToday();
+    document.getElementById('weightTodayDate').textContent = `📅 ${today}`;
+    
+    // 更新目标显示
+    const target = store.weightTarget || {};
+    document.getElementById('originWeightDisplay').textContent = target.origin ? target.origin : '未设置';
+    document.getElementById('targetWeightDisplay').textContent = target.target ? target.target : '未设置';
+    // 计算已瘦/增（用最新一天均值 - 原有体重）
+    let lostDisplay = '0';
+    if (target.origin && store.weightRecords.length > 0) {
+        const latest = store.weightRecords[store.weightRecords.length - 1];
+        const vals = [latest.morning, latest.noon, latest.evening].filter(v => v).map(v => parseFloat(v));
+        if (vals.length > 0) {
+            const latestAvg = vals.reduce((s,v) => s+v, 0) / vals.length;
+            const diff = (target.origin - latestAvg).toFixed(1);
+            lostDisplay = (diff > 0 ? '↓' : diff < 0 ? '↑' : '') + Math.abs(diff);
+        }
+    }
+    document.getElementById('lostWeightDisplay').textContent = lostDisplay;
+    
+    // 填充今日数据
+    const todayRecord = store.weightRecords.find(r => r.date === today);
+    document.getElementById('weightMorning').value = todayRecord ? todayRecord.morning || '' : '';
+    document.getElementById('weightNoon').value = todayRecord ? todayRecord.noon || '' : '';
+    document.getElementById('weightEvening').value = todayRecord ? todayRecord.evening || '' : '';
+
+    // 渲染历史
+    const list = document.getElementById('weightList');
+    const records = [...store.weightRecords].reverse();
+    if (records.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">⚖️</div>暂无记录<br>请先输入今日体重</div>';
+    } else {
+        list.innerHTML = records.map(r => {
+            const avg = [r.morning, r.noon, r.evening].filter(v => v).map(v => parseFloat(v));
+            const avgVal = avg.length ? (avg.reduce((s,v) => s+v, 0) / avg.length).toFixed(1) : '-';
+            return `
+                <div class="weight-record">
+                    <div class="date">${r.date}</div>
+                    <div class="values">
+                        <div class="value-item">
+                            <span class="v-label">早</span>
+                            <span class="v-num">${r.morning || '-'}</span>
+                        </div>
+                        <div class="value-item">
+                            <span class="v-label">中</span>
+                            <span class="v-num">${r.noon || '-'}</span>
+                        </div>
+                        <div class="value-item">
+                            <span class="v-label">晚</span>
+                            <span class="v-num">${r.evening || '-'}</span>
+                        </div>
+                    </div>
+                    <div class="avg">
+                        <div style="text-align:center;">均值</div>
+                        <div class="v-num">${avgVal}</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteWeight('${r.date}')">🗑️</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 绘制图表
+    drawWeightChart();
+}
+
+function setWeightTarget() {
+    const target = store.weightTarget || {};
+    document.getElementById('modalContent').innerHTML = `
+        <h3>🎯 设置体重目标</h3>
+        <div class="form-group">
+            <label>📋 原有体重（公斤）</label>
+            <input type="number" id="targetOrigin" value="${target.origin||''}" step="0.1" min="0" max="300" placeholder="如：60">
+        </div>
+        <div class="form-group">
+            <label>🎯 目标体重（公斤）</label>
+            <input type="number" id="targetWeight" value="${target.target||''}" step="0.1" min="0" max="300" placeholder="如：55">
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" style="background:var(--c-weight);" onclick="saveWeightTarget()">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function saveWeightTarget() {
+    const origin = document.getElementById('targetOrigin').value.trim();
+    const target = document.getElementById('targetWeight').value.trim();
+    store.weightTarget = {
+        origin: origin || null,
+        target: target || null
+    };
+    saveStore();
+    closeModal();
+    renderWeight();
+    showToast('✅ 目标已设置');
+}
+
+function saveWeight() {
+    const morning = document.getElementById('weightMorning').value.trim();
+    const noon = document.getElementById('weightNoon').value.trim();
+    const evening = document.getElementById('weightEvening').value.trim();
+    
+    if (!morning && !noon && !evening) {
+        showToast('请至少输入一个时段的体重');
+        return;
+    }
+    
+    const today = getToday();
+    const existing = store.weightRecords.find(r => r.date === today);
+    if (existing) {
+        existing.morning = morning || null;
+        existing.noon = noon || null;
+        existing.evening = evening || null;
+    } else {
+        store.weightRecords.push({
+            date: today,
+            morning: morning || null,
+            noon: noon || null,
+            evening: evening || null
+        });
+    }
+    saveStore();
+    renderWeight();
+    showToast('✅ 体重已保存');
+}
+
+function deleteWeight(date) {
+    store.weightRecords = store.weightRecords.filter(r => r.date !== date);
+    saveStore();
+    renderWeight();
+    showToast('已删除');
+}
+
+function drawWeightChart() {
+    const canvas = document.getElementById('weightChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 180 * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = '180px';
+    ctx.scale(dpr, dpr);
+    
+    const w = rect.width;
+    const h = 180;
+    const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+    const chartW = w - padding.left - padding.right;
+    const chartH = h - padding.top - padding.bottom;
+    
+    ctx.clearRect(0, 0, w, h);
+    
+    // 获取最近7天数据
+    const records = [...store.weightRecords].slice(-7);
+    
+    if (records.length === 0) {
+        ctx.fillStyle = '#999';
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('暂无趋势数据', w/2, h/2);
+        return;
+    }
+    
+    // 计算所有体重值
+    const allValues = [];
+    records.forEach(r => {
+        [r.morning, r.noon, r.evening].forEach(v => {
+            if (v) allValues.push(parseFloat(v));
+        });
+    });
+    
+    if (allValues.length === 0) {
+        ctx.fillStyle = '#999';
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('暂无趋势数据', w/2, h/2);
+        return;
+    }
+    
+    const minVal = Math.min(...allValues) - 1;
+    const maxVal = Math.max(...allValues) + 1;
+    const range = maxVal - minVal || 1;
+    
+    // 绘制网格线
+    ctx.strokeStyle = '#e0e0e8';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartH / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(w - padding.right, y);
+        ctx.stroke();
+        const val = (maxVal - (range / 4) * i).toFixed(1);
+        ctx.fillStyle = '#999';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(val, padding.left - 4, y + 3);
+    }
+    
+    // 绘制三条线
+    const colors = { morning: '#f6ad55', noon: '#4299e1', evening: '#553c9a' };
+    const labels = { morning: '早', noon: '中', evening: '晚' };
+    
+    ['morning', 'noon', 'evening'].forEach(key => {
+        const points = records.map((r, i) => {
+            if (!r[key]) return null;
+            const x = padding.left + (chartW / Math.max(records.length - 1, 1)) * i;
+            const y = padding.top + chartH - ((parseFloat(r[key]) - minVal) / range) * chartH;
+            return { x, y, val: parseFloat(r[key]) };
+        }).filter(p => p);
+        
+        if (points.length < 1) return;
+        
+        // 画线
+        ctx.strokeStyle = colors[key];
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        points.forEach((p, i) => {
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+        
+        // 画点
+        points.forEach(p => {
+            ctx.fillStyle = colors[key];
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    });
+    
+    // X轴日期
+    records.forEach((r, i) => {
+        const x = padding.left + (chartW / Math.max(records.length - 1, 1)) * i;
+        const dateLabel = r.date.slice(5); // MM-DD
+        ctx.fillStyle = '#999';
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(dateLabel, x, h - 8);
+    });
+    
+    // 图例
+    let legendX = padding.left;
+    Object.entries(labels).forEach(([key, label]) => {
+        ctx.fillStyle = colors[key];
+        ctx.beginPath();
+        ctx.arc(legendX + 5, 12, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#666';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(label, legendX + 12, 15);
+        legendX += 35;
+    });
+}
+
+// ============ 旅行模块 ============
+function setupTravelTabs() {
+    document.querySelectorAll('.travel-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const travelType = tab.dataset.travel;
+            document.querySelectorAll('.travel-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.travel-content').forEach(c => c.style.display = 'none');
+            document.getElementById('travel-' + travelType).style.display = 'block';
+        });
+    });
+}
+
+function renderCities() {
+    // 去过的城市
+    const visitedGrid = document.getElementById('visitedGrid');
+    if (store.visitedCities.length === 0) {
+        visitedGrid.innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1;">
+                <div class="empty-icon">🏖️</div>还没有去过的城市<br>点击下方按钮添加
+            </div>
+        `;
+    } else {
+        visitedGrid.innerHTML = store.visitedCities.map((c, i) => `
+            <div class="city-card visited">
+                <div style="position:absolute; top:4px; right:4px; display:flex; gap:2px;">
+                    <button onclick="editCity('visited', ${i})" style="background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:22px; height:22px; font-size:11px; cursor:pointer;">✏️</button>
+                    <button onclick="deleteCity('visited','${c.name}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:22px; height:22px; font-size:11px; cursor:pointer; color:red;">✕</button>
+                </div>
+                ${c.image ? `<img src="${c.image}" class="zoomable-img" onclick="event.stopPropagation(); openImageViewer(this.src)" style="width:100%; height:80px; object-fit:cover; border-radius:8px; margin-bottom:6px;">` : '<div class="city-icon">🏙️</div>'}
+                <div class="city-name">${c.name}</div>
+                <div class="city-date">${c.date || ''}</div>
+            </div>
+        `).join('');
+    }
+    visitedGrid.innerHTML += '<button class="add-city-btn" onclick="addCityPrompt(\'visited\')">➕ 添加城市</button>';
+
+    // 要去的城市
+    const planningGrid = document.getElementById('planningGrid');
+    if (store.planningCities.length === 0) {
+        planningGrid.innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1;">
+                <div class="empty-icon">🗺️</div>还没有规划中的城市<br>点击下方按钮添加
+            </div>
+        `;
+    } else {
+        planningGrid.innerHTML = store.planningCities.map((c, i) => `
+            <div class="city-card planning">
+                <div style="position:absolute; top:4px; right:4px; display:flex; gap:2px;">
+                    <button onclick="editCity('planning', ${i})" style="background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:22px; height:22px; font-size:11px; cursor:pointer;">✏️</button>
+                    <button onclick="deleteCity('planning','${c.name}')" style="background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:22px; height:22px; font-size:11px; cursor:pointer; color:red;">✕</button>
+                </div>
+                ${c.image ? `<img src="${c.image}" class="zoomable-img" onclick="event.stopPropagation(); openImageViewer(this.src)" style="width:100%; height:80px; object-fit:cover; border-radius:8px; margin-bottom:6px;">` : '<div class="city-icon">📍</div>'}
+                <div class="city-name">${c.name}</div>
+                <div class="city-date">${c.date ? '计划：' + c.date : '待定'}</div>
+            </div>
+        `).join('');
+    }
+    planningGrid.innerHTML += '<button class="add-city-btn" onclick="addCityPrompt(\'planning\')">➕ 添加城市</button>';
+}
+
+function addCityPrompt(type) {
+    document.getElementById('modalContent').innerHTML = `
+        <h3>${type === 'visited' ? '🏖️ 添加去过的城市' : '🗺️ 添加要去的城市'}</h3>
+        <div class="form-group">
+            <label>城市名称</label>
+            <input type="text" id="cityName" placeholder="如：北京" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>${type === 'visited' ? '旅行日期' : '计划日期'}（可选）</label>
+            <input type="text" id="cityDate" placeholder="如：2024-08 或 自由行5天">
+        </div>
+        <div class="form-group">
+            <label>📷 上传图片（可选）</label>
+            <input type="file" id="cityImage" accept="image/*" onchange="previewImage(this, 'cityImgPreview')">
+            <img id="cityImgPreview" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:8px; margin-top:6px;">
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveCity('${type}')">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('cityName').focus(), 100);
+}
+
+function saveCity(type) {
+    const name = document.getElementById('cityName').value.trim();
+    const date = document.getElementById('cityDate').value.trim();
+    if (!name) {
+        showToast('请输入城市名称');
+        return;
+    }
+    const list = type === 'visited' ? store.visitedCities : store.planningCities;
+    // 同一列表内查重
+    if (list.find(c => c && c.name === name)) {
+        showToast('"' + name + '" 已在当前列表中');
+        return;
+    }
+    // 防止重复点击：使用闭包变量
+    if (saveCity._busy) {
+        showToast('正在保存中，请稍候...');
+        return;
+    }
+    saveCity._busy = true;
+    const saveBtn = event && event.target ? event.target : null;
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '保存中...';
+    }
+    
+    // 释放锁的辅助函数
+    function done() {
+        saveCity._busy = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 保存';
+        }
+    }
+    
+    const fileInput = document.getElementById('cityImage');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        // 压缩图片到 800px, 质量 0.7
+        compressImage(file, 800, 0.7).then(compressedData => {
+            list.push({ name, date, image: compressedData });
+            saveStore();
+            renderCities();
+            closeModal();
+            done();
+            showToast('✅ 添加成功');
+        }).catch(err => {
+            // 压缩失败，直接添加不带图片
+            list.push({ name, date });
+            saveStore();
+            renderCities();
+            closeModal();
+            done();
+            showToast('✅ 添加成功（图片处理失败）');
+        });
+    } else {
+        list.push({ name, date });
+        saveStore();
+        renderCities();
+        closeModal();
+        done();
+        showToast('✅ 添加成功');
+    }
+}
+
+// 图片压缩函数：使用 Canvas 重绘
+function compressImage(file, maxWidth, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                let width = img.width;
+                let height = img.height;
+                if (width > maxWidth) {
+                    height = height * (maxWidth / width);
+                    width = maxWidth;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                try {
+                    const data = canvas.toDataURL('image/jpeg', quality);
+                    resolve(data);
+                } catch(err) {
+                    reject(err);
+                }
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function editCity(type, index) {
+    const list = type === 'visited' ? store.visitedCities : store.planningCities;
+    const c = list[index];
+    document.getElementById('modalContent').innerHTML = `
+        <h3>✏️ 编辑城市</h3>
+        <div class="form-group">
+            <label>城市名称</label>
+            <input type="text" id="cityName" value="${escapeHtml(c.name)}">
+        </div>
+        <div class="form-group">
+            <label>${type === 'visited' ? '旅行日期' : '计划日期'}（可选）</label>
+            <input type="text" id="cityDate" value="${escapeHtml(c.date||'')}">
+        </div>
+        ${c.image ? `<div style="margin-bottom:10px;"><label style="font-size:13px; color:var(--text-light); display:block; margin-bottom:4px;">📷 现有图片</label><div style="position:relative; display:inline-block;"><img src="${c.image}" style="width:100%; max-height:120px; object-fit:cover; border-radius:8px;"><button onclick="removeCityImage('${type}', ${index})" style="position:absolute; top:4px; right:4px; background:red; color:#fff; border:none; border-radius:50%; width:22px; height:22px; font-size:12px; cursor:pointer;">✕</button></div></div>` : ''}
+        <div class="form-group">
+            <label>📷 更换图片（可选）</label>
+            <input type="file" id="cityImage" accept="image/*" onchange="previewImage(this, 'cityImgPreview')">
+            <img id="cityImgPreview" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:8px; margin-top:6px;">
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveEditCity('${type}', ${index})">💾 保存修改</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function removeCityImage(type, index) {
+    const list = type === 'visited' ? store.visitedCities : store.planningCities;
+    delete list[index].image;
+    saveStore();
+    renderCities();
+    closeModal();
+    showToast('已删除图片');
+}
+
+function saveEditCity(type, index) {
+    const list = type === 'visited' ? store.visitedCities : store.planningCities;
+    const name = document.getElementById('cityName').value.trim();
+    const date = document.getElementById('cityDate').value.trim();
+    if (!name) { showToast('请输入城市名称'); return; }
+    
+    // 检查重名（排除自己）
+    const duplicate = list.find((c, i) => i !== index && c.name === name);
+    if (duplicate) { showToast('"' + name + '" 已在当前列表中'); return; }
+    
+    const c = list[index];
+    c.name = name;
+    c.date = date;
+    
+    const fileInput = document.getElementById('cityImage');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        compressImage(fileInput.files[0], 800, 0.7).then(data => {
+            c.image = data;
+            saveStore();
+            renderCities();
+            closeModal();
+            showToast('✅ 城市已更新');
+        }).catch(() => {
+            saveStore();
+            renderCities();
+            closeModal();
+            showToast('✅ 城市已更新（图片处理失败）');
+        });
+    } else {
+        saveStore();
+        renderCities();
+        closeModal();
+        showToast('✅ 城市已更新');
+    }
+}
+
+function deleteCity(type, name) {
+    if (type === 'visited') {
+        store.visitedCities = store.visitedCities.filter(c => c.name !== name);
+    } else {
+        store.planningCities = store.planningCities.filter(c => c.name !== name);
+    }
+    saveStore();
+    renderCities();
+    showToast('已删除');
+}
+
+// 旅游攻略
+function renderGuides() {
+    const list = document.getElementById('guideList');
+    if (store.guides.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📖</div>还没有攻略<br>点击下方按钮创建
+            </div>
+            <button class="add-city-btn" onclick="addGuidePrompt()" style="margin-top:12px;">➕ 添加攻略</button>
+        `;
+        return;
+    }
+    list.innerHTML = '<div class="drag-hint">💡 长按卡片可拖拽调整顺序</div>' + store.guides.map((g, i) => `
+        <div class="drag-item guide-item" data-index="${i}">
+            <div class="guide-header">
+                <span class="guide-title">${g.title}<span class="drag-handle" title="长按拖拽">≡</span></span>
+                <span class="guide-city">📍 ${g.city}</span>
+            </div>
+            ${g.images && g.images.length > 0 ? `<div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:8px;">${g.images.map(img => `<img src="${img}" class="zoomable-img" onclick="event.stopPropagation(); openImageViewer(this.src)" style="width:80px; height:80px; object-fit:cover; border-radius:8px; flex-shrink:0;">`).join('')}</div>` : ''}
+            <div class="guide-content">${g.content}</div>
+            ${g.tags ? g.tags.map(t => `<span class="guide-tag">${t}</span>`).join('') : ''}
+            <div style="margin-top:10px; text-align:right;">
+                <button class="delete-btn" onclick="event.stopPropagation(); editGuide(${i})" style="font-size:13px;">✏️ 编辑</button>
+                <button class="delete-btn" onclick="event.stopPropagation(); deleteGuide(${i})" style="font-size:13px;">🗑️ 删除</button>
+            </div>
+        </div>
+    `).join('') + '<button class="add-city-btn" onclick="addGuidePrompt()" style="margin-top:12px;">➕ 添加攻略</button>';
+    initDragSort(list, store.guides, renderGuides, 'guides');
+}
+
+function addGuidePrompt() {
+    document.getElementById('modalContent').innerHTML = `
+        <h3>📖 添加旅游攻略</h3>
+        <div class="form-group">
+            <label>攻略标题</label>
+            <input type="text" id="guideTitle" placeholder="如：北京三日游">
+        </div>
+        <div class="form-group">
+            <label>城市</label>
+            <input type="text" id="guideCity" placeholder="如：北京">
+        </div>
+        <div class="form-group">
+            <label>攻略内容</label>
+            <textarea id="guideContent" rows="6" placeholder="行程安排、美食推荐、注意事项等..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>标签（用逗号分隔）</label>
+            <input type="text" id="guideTags" placeholder="如：美食,景点,亲子">
+        </div>
+        <div class="form-group">
+            <label>📷 上传图片（可选，可多选）</label>
+            <input type="file" id="guideImages" accept="image/*" multiple onchange="previewGuideImages(this)">
+            <div id="guideImgPreview" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveGuide()">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('guideTitle').focus(), 100);
+}
+
+function previewGuideImages(input) {
+    const preview = document.getElementById('guideImgPreview');
+    preview.innerHTML = '';
+    if (input.files) {
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style = 'width:60px; height:60px; object-fit:cover; border-radius:6px;';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
+function saveGuide() {
+    const title = document.getElementById('guideTitle').value.trim();
+    const city = document.getElementById('guideCity').value.trim();
+    const content = document.getElementById('guideContent').value.trim();
+    const tagsStr = document.getElementById('guideTags').value.trim();
+    if (!title || !city) {
+        showToast('请填写标题和城市');
+        return;
+    }
+    // 防止重复点击
+    if (saveGuide._busy) {
+        showToast('正在保存中，请稍候...');
+        return;
+    }
+    saveGuide._busy = true;
+    const saveBtn = event && event.target ? event.target : null;
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '保存中...';
+    }
+    function done() {
+        saveGuide._busy = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 保存';
+        }
+    }
+    
+    const tags = tagsStr ? tagsStr.split(/[,，]/).map(t => t.trim()).filter(t => t) : [];
+    const fileInput = document.getElementById('guideImages');
+    const files = (fileInput && fileInput.files) ? Array.from(fileInput.files) : [];
+    if (files.length > 0) {
+        const images = [];
+        let loaded = 0;
+        let failed = 0;
+        files.forEach(file => {
+            compressImage(file, 800, 0.7).then(compressedData => {
+                images.push(compressedData);
+                loaded++;
+                if (loaded + failed === files.length) {
+                    const guideData = { title, city, content, tags };
+                    if (images.length > 0) guideData.images = images;
+                    store.guides.push(guideData);
+                    saveStore();
+                    renderGuides();
+                    closeModal();
+                    done();
+                    showToast('✅ 攻略已保存');
+                }
+            }).catch(() => {
+                failed++;
+                if (loaded + failed === files.length) {
+                    const guideData = { title, city, content, tags };
+                    if (images.length > 0) guideData.images = images;
+                    store.guides.push(guideData);
+                    saveStore();
+                    renderGuides();
+                    closeModal();
+                    done();
+                    showToast('✅ 攻略已保存（部分图片处理失败）');
+                }
+            });
+        });
+    } else {
+        store.guides.push({ title, city, content, tags });
+        saveStore();
+        renderGuides();
+        closeModal();
+        done();
+        showToast('✅ 攻略已保存');
+    }
+}
+
+function editGuide(index) {
+    const g = store.guides[index];
+    document.getElementById('modalContent').innerHTML = `
+        <h3>✏️ 编辑攻略</h3>
+        <div class="form-group">
+            <label>攻略标题</label>
+            <input type="text" id="guideTitle" value="${escapeHtml(g.title)}">
+        </div>
+        <div class="form-group">
+            <label>城市</label>
+            <input type="text" id="guideCity" value="${escapeHtml(g.city)}">
+        </div>
+        <div class="form-group">
+            <label>攻略内容</label>
+            <textarea id="guideContent" rows="6">${escapeHtml(g.content)}</textarea>
+        </div>
+        <div class="form-group">
+            <label>标签（用逗号分隔）</label>
+            <input type="text" id="guideTags" value="${g.tags ? g.tags.join(',') : ''}">
+        </div>
+        ${g.images && g.images.length > 0 ? `<div style="margin-bottom:10px;"><label style="font-size:13px; color:var(--text-light); display:block; margin-bottom:4px;">📷 现有图片</label><div style="display:flex; gap:6px; flex-wrap:wrap;">${g.images.map((img, idx) => `<div style="position:relative;"><img src="${img}" style="width:60px; height:60px; object-fit:cover; border-radius:6px;"><button onclick="removeGuideImage(${index}, ${idx})" style="position:absolute; top:-4px; right:-4px; background:red; color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer;">✕</button></div>`).join('')}</div></div>` : ''}
+        <div class="form-group">
+            <label>📷 追加图片（可选，可多选）</label>
+            <input type="file" id="guideImages" accept="image/*" multiple onchange="previewGuideImages(this)">
+            <div id="guideImgPreview" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveEditGuide(${index})">💾 保存修改</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function removeGuideImage(guideIndex, imgIndex) {
+    store.guides[guideIndex].images.splice(imgIndex, 1);
+    if (store.guides[guideIndex].images.length === 0) delete store.guides[guideIndex].images;
+    saveStore();
+    renderGuides();
+    closeModal();
+    showToast('已删除该图片');
+}
+
+function saveEditGuide(index) {
+    const title = document.getElementById('guideTitle').value.trim();
+    const city = document.getElementById('guideCity').value.trim();
+    const content = document.getElementById('guideContent').value.trim();
+    const tagsStr = document.getElementById('guideTags').value.trim();
+    if (!title || !city) {
+        showToast('请填写标题和城市');
+        return;
+    }
+    if (saveEditGuide._busy) { showToast('正在保存中...'); return; }
+    saveEditGuide._busy = true;
+    
+    const tags = tagsStr ? tagsStr.split(/[,，]/).map(t => t.trim()).filter(t => t) : [];
+    const g = store.guides[index];
+    g.title = title;
+    g.city = city;
+    g.content = content;
+    g.tags = tags;
+    
+    const fileInput = document.getElementById('guideImages');
+    const files = (fileInput && fileInput.files) ? Array.from(fileInput.files) : [];
+    if (files.length > 0) {
+        if (!g.images) g.images = [];
+        let loaded = 0;
+        let failed = 0;
+        files.forEach(file => {
+            compressImage(file, 800, 0.7).then(data => {
+                g.images.push(data);
+                loaded++;
+                if (loaded + failed === files.length) finishEditGuide(index);
+            }).catch(() => {
+                failed++;
+                if (loaded + failed === files.length) finishEditGuide(index);
+            });
+        });
+    } else {
+        finishEditGuide(index);
+    }
+}
+
+function finishEditGuide(index) {
+    saveStore();
+    renderGuides();
+    closeModal();
+    saveEditGuide._busy = false;
+    showToast('✅ 攻略已更新');
+}
+
+function deleteGuide(index) {
+    store.guides.splice(index, 1);
+    saveStore();
+    renderGuides();
+    showToast('已删除');
+}
+
+// ============ 穿搭模块 ============
+function renderOutfits() {
+    const list = document.getElementById('outfitList');
+    if (!store.outfits) store.outfits = [];
+    if (store.outfits.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">👗</div>还没有穿搭记录<br>点击上方添加</div>';
+        return;
+    }
+    list.innerHTML = '<div class="drag-hint">💡 长按卡片可拖拽调整顺序</div>' + store.outfits.map((o, i) => `
+        <div class="drag-item" data-index="${i}" style="background:var(--c-outfit-bg); border-radius:12px; padding:12px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:700; font-size:15px;">${escapeHtml(o.title)}<span class="drag-handle" title="长按拖拽">≡</span></span>
+                <div>
+                    <button class="delete-btn" onclick="event.stopPropagation(); editOutfit(${i})" style="font-size:13px;">✏️</button>
+                    <button class="delete-btn" onclick="event.stopPropagation(); deleteOutfit(${i})" style="font-size:13px;">🗑️</button>
+                </div>
+            </div>
+            ${o.images && o.images.length > 0 ? `<div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:6px;">${o.images.map(img => `<img src="${img}" class="zoomable-img" onclick="event.stopPropagation(); openImageViewer(this.src)" style="width:100px; height:130px; object-fit:cover; border-radius:8px; flex-shrink:0;">`).join('')}</div>` : ''}
+            ${o.video ? `<video src="${o.video}" controls style="width:100%; max-height:200px; border-radius:8px; margin-bottom:6px;"></video>` : ''}
+            ${o.note ? `<div style="font-size:13px; color:var(--text-light); line-height:1.5;">${escapeHtml(o.note)}</div>` : ''}
+        </div>
+    `).join('');
+    initDragSort(list, store.outfits, renderOutfits, 'outfits');
+}
+
+function addOutfitPrompt() {
+    document.getElementById('modalContent').innerHTML = `
+        <h3>👗 添加穿搭</h3>
+        <div class="form-group">
+            <label>穿搭标题</label>
+            <input type="text" id="outfitModalTitle" placeholder="如：夏日清新风">
+        </div>
+        <div class="form-group">
+            <label>📷 上传图片（可多选）</label>
+            <input type="file" id="outfitImages" accept="image/*" multiple onchange="previewOutfitImages(this)">
+            <div id="outfitImgPreview" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+        </div>
+        <div class="form-group">
+            <label>🎬 上传视频（可选）</label>
+            <input type="file" id="outfitVideo" accept="video/*" onchange="previewOutfitVideo(this)">
+            <video id="outfitVideoPreview" controls style="display:none; width:100%; max-height:160px; border-radius:8px; margin-top:6px;"></video>
+        </div>
+        <div class="form-group">
+            <label>备注（可选）</label>
+            <textarea id="outfitNote" rows="2" placeholder="穿搭心得、搭配说明等..."></textarea>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" style="background:var(--c-outfit);" onclick="saveOutfit()">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function previewOutfitImages(input) {
+    const preview = document.getElementById('outfitImgPreview');
+    preview.innerHTML = '';
+    if (input.files) {
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style = 'width:60px; height:60px; object-fit:cover; border-radius:6px;';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
+function previewOutfitVideo(input) {
+    const preview = document.getElementById('outfitVideoPreview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function saveOutfit() {
+    const title = document.getElementById('outfitModalTitle').value.trim();
+    const note = document.getElementById('outfitNote').value.trim();
+    if (!title) {
+        showToast('请输入穿搭标题');
+        return;
+    }
+    // 防止重复点击
+    if (saveOutfit._busy) {
+        showToast('正在保存中，请稍候...');
+        return;
+    }
+    saveOutfit._busy = true;
+    const saveBtn = event && event.target ? event.target : null;
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '保存中...';
+    }
+    
+    function done() {
+        saveOutfit._busy = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 保存';
+        }
+    }
+    
+    const imgInput = document.getElementById('outfitImages');
+    const videoInput = document.getElementById('outfitVideo');
+    const imgFiles = (imgInput && imgInput.files) ? Array.from(imgInput.files) : [];
+    const videoFile = (videoInput && videoInput.files && videoInput.files[0]) ? videoInput.files[0] : null;
+
+    const outfit = { title, note, images: [], video: null };
+    
+    if (imgFiles.length === 0 && !videoFile) {
+        if (!store.outfits) store.outfits = [];
+        store.outfits.unshift(outfit);
+        saveStore();
+        renderOutfits();
+        closeModal();
+        done();
+        showToast('✅ 穿搭已保存');
+        return;
+    }
+
+    let pending = imgFiles.length + (videoFile ? 1 : 0);
+    
+    // 压缩所有图片
+    imgFiles.forEach(file => {
+        compressImage(file, 800, 0.7).then(compressedData => {
+            outfit.images.push(compressedData);
+            pending--;
+            if (pending === 0) finishSaveOutfit(outfit, done);
+        }).catch(() => {
+            // 压缩失败，跳过这张图
+            pending--;
+            if (pending === 0) finishSaveOutfit(outfit, done);
+        });
+    });
+    
+    // 视频：压缩到较低分辨率（如果支持），否则直接读取
+    if (videoFile) {
+        // 视频太大无法存 localStorage，限制 2MB 以内
+        if (videoFile.size > 2 * 1024 * 1024) {
+            showToast('视频超过2MB，已跳过');
+            pending--;
+            if (pending === 0) finishSaveOutfit(outfit, done);
+        } else {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                outfit.video = e.target.result;
+                pending--;
+                if (pending === 0) finishSaveOutfit(outfit, done);
+            };
+            reader.onerror = function() {
+                pending--;
+                if (pending === 0) finishSaveOutfit(outfit, done);
+            };
+            reader.readAsDataURL(videoFile);
+        }
+    }
+}
+
+function finishSaveOutfit(outfit, doneCallback) {
+    if (!store.outfits) store.outfits = [];
+    store.outfits.unshift(outfit);
+    saveStore();
+    renderOutfits();
+    closeModal();
+    if (doneCallback) doneCallback();
+    showToast('✅ 穿搭已保存');
+}
+
+function editOutfit(index) {
+    const o = store.outfits[index];
+    document.getElementById('modalContent').innerHTML = `
+        <h3>✏️ 编辑穿搭</h3>
+        <div class="form-group">
+            <label>穿搭标题</label>
+            <input type="text" id="outfitModalTitle" value="${escapeHtml(o.title)}">
+        </div>
+        <div class="form-group">
+            <label>备注</label>
+            <textarea id="outfitNote" rows="2">${escapeHtml(o.note||'')}</textarea>
+        </div>
+        ${o.images && o.images.length > 0 ? `<div style="margin-bottom:10px;"><label style="font-size:13px; color:var(--text-light); display:block; margin-bottom:4px;">📷 现有图片（点击✕删除）</label><div style="display:flex; gap:6px; flex-wrap:wrap;">${o.images.map((img, idx) => `<div style="position:relative;"><img src="${img}" style="width:60px; height:60px; object-fit:cover; border-radius:6px;"><button onclick="removeOutfitImage(${index}, ${idx})" style="position:absolute; top:-4px; right:-4px; background:red; color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer;">✕</button></div>`).join('')}</div></div>` : ''}
+        <div class="form-group">
+            <label>📷 追加图片（可选）</label>
+            <input type="file" id="outfitImages" accept="image/*" multiple onchange="previewOutfitImages(this)">
+            <div id="outfitImgPreview" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+        </div>
+        ${o.video ? `<div style="margin-bottom:10px;"><label style="font-size:13px; color:var(--text-light); display:block; margin-bottom:4px;">🎬 现有视频</label><video src="${o.video}" controls style="width:100%; max-height:120px; border-radius:8px;"></video><button class="btn btn-secondary" style="margin-top:4px; font-size:12px;" onclick="removeOutfitVideo(${index})">🗑️ 删除视频</button></div>` : ''}
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" style="background:var(--c-outfit);" onclick="saveEditOutfit(${index})">💾 保存修改</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function removeOutfitImage(outfitIndex, imgIndex) {
+    store.outfits[outfitIndex].images.splice(imgIndex, 1);
+    if (store.outfits[outfitIndex].images.length === 0) delete store.outfits[outfitIndex].images;
+    saveStore();
+    renderOutfits();
+    closeModal();
+    showToast('已删除该图片');
+}
+
+function removeOutfitVideo(outfitIndex) {
+    delete store.outfits[outfitIndex].video;
+    saveStore();
+    renderOutfits();
+    closeModal();
+    showToast('已删除视频');
+}
+
+function saveEditOutfit(index) {
+    const title = document.getElementById('outfitModalTitle').value.trim();
+    const note = document.getElementById('outfitNote').value.trim();
+    if (!title) { showToast('请输入穿搭标题'); return; }
+    if (saveEditOutfit._busy) { showToast('正在保存中...'); return; }
+    saveEditOutfit._busy = true;
+    
+    const o = store.outfits[index];
+    o.title = title;
+    o.note = note;
+    
+    const imgInput = document.getElementById('outfitImages');
+    const imgFiles = (imgInput && imgInput.files) ? Array.from(imgInput.files) : [];
+    if (imgFiles.length > 0) {
+        if (!o.images) o.images = [];
+        let loaded = 0;
+        let failed = 0;
+        imgFiles.forEach(file => {
+            compressImage(file, 800, 0.7).then(data => {
+                o.images.push(data);
+                loaded++;
+                if (loaded + failed === imgFiles.length) finishEditOutfit(index);
+            }).catch(() => {
+                failed++;
+                if (loaded + failed === imgFiles.length) finishEditOutfit(index);
+            });
+        });
+    } else {
+        finishEditOutfit(index);
+    }
+}
+
+function finishEditOutfit(index) {
+    saveStore();
+    renderOutfits();
+    closeModal();
+    saveEditOutfit._busy = false;
+    showToast('✅ 穿搭已更新');
+}
+
+function deleteOutfit(index) {
+    store.outfits.splice(index, 1);
+    saveStore();
+    renderOutfits();
+    showToast('已删除');
+}
+
+// ============ 饮食模块 ============
+const DIET_PERIODS = [
+    { key: 'morning', label: '🌅 早餐', emoji: '🍳', empty: '还没有早餐记录~ 🥐' },
+    { key: 'noon', label: '☀️ 午餐', emoji: '🍱', empty: '还没有午餐记录~ 🍜' },
+    { key: 'evening', label: '🌙 晚餐', emoji: '🍲', empty: '还没有晚餐记录~ 🍛' },
+    { key: 'snack', label: '🍓 加餐', emoji: '🧁', empty: '还没有加餐记录~ 🍰' }
+];
+
+function renderDiets() {
+    if (!store.diets) store.diets = [];
+    DIET_PERIODS.forEach(period => {
+        const container = document.getElementById('dietList-' + period.key);
+        if (!container) return;
+        const items = store.diets.map((d, i) => ({ d, i })).filter(x => (x.d.period || 'snack') === period.key);
+        if (items.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:14px; color:var(--text-light); font-size:13px;">${period.empty}</div>`;
+            return;
+        }
+        container.innerHTML = (items.length > 1 ? '<div class="drag-hint">💡 长按可拖拽排序</div>' : '') + items.map(({ d, i }) => `
+            <div class="drag-item" data-index="${i}" data-period="${period.key}" style="background:var(--c-diet-bg); border-radius:12px; padding:12px; margin-bottom:10px; border-left:3px solid var(--c-diet);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:700; font-size:15px;">${period.emoji} ${escapeHtml(d.title)}<span class="drag-handle" title="长按拖拽">≡</span></span>
+                    <div>
+                        <button class="delete-btn" onclick="event.stopPropagation(); editDiet(${i})" style="font-size:13px;">✏️</button>
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteDiet(${i})" style="font-size:13px;">🗑️</button>
+                    </div>
+                </div>
+                ${d.images && d.images.length > 0 ? `<div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:6px; padding-bottom:4px;">${d.images.map(img => `<img src="${img}" class="zoomable-img" onclick="event.stopPropagation(); openImageViewer(this.src)" style="width:90px; height:90px; object-fit:cover; border-radius:8px; flex-shrink:0;">`).join('')}</div>` : ''}
+                ${d.note ? `<div style="font-size:13px; color:var(--text-light); line-height:1.5; background:rgba(255,255,255,0.5); padding:6px 8px; border-radius:6px; margin-top:4px;">📝 ${escapeHtml(d.note)}</div>` : ''}
+                <div style="font-size:11px; color:var(--text-light); margin-top:6px;">🕐 ${d.time||''}</div>
+            </div>
+        `).join('');
+        if (items.length > 1) {
+            initDragSort(container, store.diets, renderDiets, 'diets', period.key);
+        }
+    });
+}
+
+function addDietPrompt() {
+    document.getElementById('modalContent').innerHTML = `
+        <h3>🍱 记录一餐</h3>
+        <div class="form-group">
+            <label>🍽️ 用餐时段</label>
+            <select id="dietPeriod">
+                <option value="morning">🌅 早餐</option>
+                <option value="noon">☀️ 午餐</option>
+                <option value="evening">🌙 晚餐</option>
+                <option value="snack">🍓 加餐/其他</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>📝 餐名</label>
+            <input type="text" id="dietModalTitle" placeholder="如：燕麦粥+鸡蛋">
+        </div>
+        <div class="form-group">
+            <label>📷 上传图片（可多选）</label>
+            <input type="file" id="dietImages" accept="image/*" multiple onchange="previewDietImages(this)">
+            <div id="dietImgPreview" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+        </div>
+        <div class="form-group">
+            <label>💬 备注（可选）</label>
+            <textarea id="dietNote" rows="2" placeholder="热量、食材、心情等..."></textarea>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" style="background:var(--c-diet);" onclick="saveDiet()">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function previewDietImages(input) {
+    const preview = document.getElementById('dietImgPreview');
+    preview.innerHTML = '';
+    if (input.files) {
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style = 'width:60px; height:60px; object-fit:cover; border-radius:6px;';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
+function saveDiet() {
+    const title = document.getElementById('dietModalTitle').value.trim();
+    const note = document.getElementById('dietNote').value.trim();
+    if (!title) { showToast('请输入餐名'); return; }
+    if (saveDiet._busy) { showToast('正在保存中...'); return; }
+    saveDiet._busy = true;
+    const saveBtn = event && event.target ? event.target : null;
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中...'; }
+    function done() { saveDiet._busy = false; if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 保存'; } }
+    
+    const now = new Date();
+    const time = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const period = document.getElementById('dietPeriod') ? document.getElementById('dietPeriod').value : 'snack';
+    const diet = { title, note, images: [], time, period };
+    const imgInput = document.getElementById('dietImages');
+    const imgFiles = (imgInput && imgInput.files) ? Array.from(imgInput.files) : [];
+    if (imgFiles.length === 0) {
+        store.diets.unshift(diet);
+        saveStore(); renderDiets(); closeModal(); done();
+        showToast('✅ 饮食已保存'); return;
+    }
+    let pending = imgFiles.length;
+    imgFiles.forEach(file => {
+        compressImage(file, 800, 0.7).then(data => {
+            diet.images.push(data); pending--;
+            if (pending === 0) { store.diets.unshift(diet); saveStore(); renderDiets(); closeModal(); done(); showToast('✅ 饮食已保存'); }
+        }).catch(() => { pending--; if (pending === 0) { store.diets.unshift(diet); saveStore(); renderDiets(); closeModal(); done(); showToast('✅ 饮食已保存'); } });
+    });
+}
+
+function editDiet(index) {
+    const d = store.diets[index];
+    const curPeriod = d.period || 'snack';
+    document.getElementById('modalContent').innerHTML = `
+        <h3>✏️ 编辑饮食</h3>
+        <div class="form-group"><label>🍽️ 用餐时段</label><select id="dietPeriod"><option value="morning" ${curPeriod==='morning'?'selected':''}>🌅 早餐</option><option value="noon" ${curPeriod==='noon'?'selected':''}>☀️ 午餐</option><option value="evening" ${curPeriod==='evening'?'selected':''}>🌙 晚餐</option><option value="snack" ${curPeriod==='snack'?'selected':''}>🍓 加餐/其他</option></select></div>
+        <div class="form-group"><label>📝 餐名</label><input type="text" id="dietModalTitle" value="${escapeHtml(d.title)}"></div>
+        <div class="form-group"><label>备注</label><textarea id="dietNote" rows="2">${escapeHtml(d.note||'')}</textarea></div>
+        ${d.images && d.images.length > 0 ? `<div style="margin-bottom:10px;"><label style="font-size:13px; color:var(--text-light); display:block; margin-bottom:4px;">📷 现有图片（点击✕删除）</label><div style="display:flex; gap:6px; flex-wrap:wrap;">${d.images.map((img, idx) => `<div style="position:relative;"><img src="${img}" style="width:60px; height:60px; object-fit:cover; border-radius:6px;"><button onclick="removeDietImage(${index}, ${idx})" style="position:absolute; top:-4px; right:-4px; background:red; color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer;">✕</button></div>`).join('')}</div></div>` : ''}
+        <div class="form-group"><label>📷 追加图片（可选）</label><input type="file" id="dietImages" accept="image/*" multiple onchange="previewDietImages(this)"><div id="dietImgPreview" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div></div>
+        <div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" style="background:var(--c-diet);" onclick="saveEditDiet(${index})">💾 保存修改</button></div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function removeDietImage(dietIndex, imgIndex) {
+    store.diets[dietIndex].images.splice(imgIndex, 1);
+    if (store.diets[dietIndex].images.length === 0) delete store.diets[dietIndex].images;
+    saveStore(); renderDiets(); closeModal(); showToast('已删除该图片');
+}
+
+function saveEditDiet(index) {
+    const title = document.getElementById('dietModalTitle').value.trim();
+    const note = document.getElementById('dietNote').value.trim();
+    if (!title) { showToast('请输入餐名'); return; }
+    if (saveEditDiet._busy) { showToast('正在保存中...'); return; }
+    saveEditDiet._busy = true;
+    const d = store.diets[index]; d.title = title; d.note = note;
+    const periodEl = document.getElementById('dietPeriod');
+    if (periodEl) d.period = periodEl.value;
+    const imgInput = document.getElementById('dietImages');
+    const imgFiles = (imgInput && imgInput.files) ? Array.from(imgInput.files) : [];
+    if (imgFiles.length > 0) {
+        if (!d.images) d.images = [];
+        let pending = imgFiles.length;
+        imgFiles.forEach(file => {
+            compressImage(file, 800, 0.7).then(data => { d.images.push(data); pending--; if (pending===0) finishEditDiet(index); }).catch(() => { pending--; if (pending===0) finishEditDiet(index); });
+        });
+    } else { finishEditDiet(index); }
+}
+
+function finishEditDiet(index) {
+    saveStore(); renderDiets(); closeModal(); saveEditDiet._busy = false; showToast('✅ 饮食已更新');
+}
+
+function deleteDiet(index) {
+    store.diets.splice(index, 1); saveStore(); renderDiets(); showToast('已删除');
+}
+
+// ============ 记账模块 ============
+let financeQueryMonth = ''; // 空表示当前月
+
+function getFinanceMonth() {
+    if (financeQueryMonth) return financeQueryMonth;
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+}
+
+function changeFinanceMonth() {
+    const monthInput = document.getElementById('financeMonth');
+    financeQueryMonth = monthInput.value || '';
+    renderFinances();
+}
+
+function renderFinances() {
+    if (!store.finances) store.finances = [];
+    const ym = getFinanceMonth();
+    const today = getToday();
+    
+    // 设置月份选择器
+    const monthInput = document.getElementById('financeMonth');
+    if (monthInput && !monthInput.value) monthInput.value = ym;
+    
+    // 月度支出
+    const monthRecords = store.finances.filter(f => f.date.startsWith(ym));
+    const monthTotal = monthRecords.reduce((s, f) => s + f.amount, 0);
+    document.getElementById('monthTotal').textContent = '¥' + monthTotal.toFixed(2);
+    
+    // 今日支出
+    const todayRecords = store.finances.filter(f => f.date === today);
+    const todayTotal = todayRecords.reduce((s, f) => s + f.amount, 0);
+    document.getElementById('todayTotal').textContent = '¥' + todayTotal.toFixed(2);
+    
+    // 日均支出
+    const now = new Date();
+    let daysInMonth;
+    if (financeQueryMonth) {
+        const [y, m] = financeQueryMonth.split('-').map(Number);
+        daysInMonth = new Date(y, m, 0).getDate();
+    } else {
+        daysInMonth = now.getDate();
+    }
+    const avgDaily = daysInMonth > 0 ? monthTotal / daysInMonth : 0;
+    const avgEl = document.getElementById('avgDaily');
+    if (avgEl) avgEl.textContent = '¥' + avgDaily.toFixed(2);
+    
+    // 各平台统计
+    const platformMap = {};
+    monthRecords.forEach(f => { platformMap[f.platform] = (platformMap[f.platform]||0) + f.amount; });
+    const platformStats = document.getElementById('platformStats');
+    const platforms = Object.keys(platformMap).sort((a,b) => platformMap[b]-platformMap[a]);
+    if (platforms.length === 0) {
+        platformStats.innerHTML = '<div style="text-align:center; color:var(--text-light); padding:10px; font-size:13px;">本月暂无消费记录</div>';
+    } else {
+        const maxVal = Math.max(...Object.values(platformMap));
+        const platformIcons = {'微信支付':'💚','支付宝':'💙','银行卡':'🏦','现金':'💵','美团':'🍔','淘宝':'🛒','京东':'📦','拼多多':'🎉','抖音':'🎵','其他':'📌'};
+        platformStats.innerHTML = platforms.map(p => `
+            <div style="margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                    <span style="font-weight:600;">${platformIcons[p]||'📌'} ${escapeHtml(p)}</span>
+                    <span style="color:var(--c-finance); font-weight:700;">¥${platformMap[p].toFixed(2)}</span>
+                </div>
+                <div style="background:var(--bg); border-radius:6px; height:8px; overflow:hidden;">
+                    <div style="background:linear-gradient(90deg, var(--c-finance), #4db6ac); height:100%; border-radius:6px; width:${(platformMap[p]/maxVal*100).toFixed(0)}%; transition:width 0.3s;"></div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // 消费明细（只显示查询月份的数据）
+    const list = document.getElementById('financeList');
+    if (monthRecords.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">💰</div>${ym} 月暂无消费记录<br>点击上方添加</div>`;
+        return;
+    }
+    const sorted = [...monthRecords].sort((a,b) => b.date.localeCompare(a.date));
+    // 按日期分组
+    const grouped = {};
+    sorted.forEach(f => {
+        if (!grouped[f.date]) grouped[f.date] = [];
+        grouped[f.date].push(f);
+    });
+    list.innerHTML = Object.keys(grouped).sort((a,b) => b.localeCompare(a)).map(date => {
+        const dayRecords = grouped[date];
+        const dayTotal = dayRecords.reduce((s, f) => s + f.amount, 0);
+        const dateObj = new Date(date);
+        const weekDays = ['日','一','二','三','四','五','六'];
+        const weekDay = weekDays[dateObj.getDay()];
+        return `
+        <div style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--c-finance-bg); border-radius:8px; margin-bottom:6px;">
+                <span style="font-size:13px; font-weight:600; color:var(--c-finance);">📅 ${date.slice(5)} 周${weekDay}</span>
+                <span style="font-size:13px; font-weight:700; color:var(--danger);">当日 ¥${dayTotal.toFixed(2)}</span>
+            </div>
+            ${dayRecords.map(f => {
+                const realIndex = store.finances.indexOf(f);
+                return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px solid var(--border);">
+                    <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                        <span style="font-size:22px;">${f.icon||'💸'}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:600; font-size:14px;">${escapeHtml(f.desc)}</div>
+                            <div style="font-size:11px; color:var(--text-light);">💳 ${escapeHtml(f.platform)}</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right; display:flex; align-items:center; gap:6px;">
+                        <span style="font-weight:700; color:var(--danger); font-size:15px;">¥${f.amount.toFixed(2)}</span>
+                        <button class="delete-btn" onclick="editFinance(${realIndex})" style="font-size:13px;">✏️</button>
+                        <button class="delete-btn" onclick="deleteFinance(${realIndex})" style="font-size:13px;">🗑️</button>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>`;
+    }).join('');
+}
+
+function addFinancePrompt() {
+    const platforms = ['微信支付','支付宝','银行卡','现金','美团','淘宝','京东','拼多多','抖音','其他'];
+    document.getElementById('modalContent').innerHTML = `
+        <h3>💰 记一笔消费</h3>
+        <div class="form-group">
+            <label>消费说明</label>
+            <input type="text" id="financeModalDesc" placeholder="如：午餐-外卖">
+        </div>
+        <div class="form-group">
+            <label>金额（元）</label>
+            <input type="number" id="financeAmount" step="0.01" min="0" placeholder="如：25.50">
+        </div>
+        <div class="form-group">
+            <label>消费平台</label>
+            <select id="financePlatform">
+                ${platforms.map(p => `<option value="${p}">${p}</option>`).join('')}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>日期</label>
+            <input type="date" id="financeDate" value="${getToday()}">
+        </div>
+        <div class="form-group">
+            <label>分类图标</label>
+            <select id="financeIcon">
+                <option value="💸">💸 通用</option>
+                <option value="🍔">🍔 餐饮</option>
+                <option value="🛒">🛒 购物</option>
+                <option value="🚗">🚗 交通</option>
+                <option value="🏠">🏠 住房</option>
+                <option value="🎬">🎬 娱乐</option>
+                <option value="💊">💊 医疗</option>
+                <option value="📚">📚 学习</option>
+                <option value="👔">👔 服饰</option>
+                <option value="🎁">🎁 礼物</option>
+            </select>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" style="background:var(--c-finance);" onclick="saveFinance()">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function saveFinance() {
+    const desc = document.getElementById('financeModalDesc').value.trim();
+    const amount = parseFloat(document.getElementById('financeAmount').value);
+    const platform = document.getElementById('financePlatform').value;
+    const date = document.getElementById('financeDate').value || getToday();
+    const icon = document.getElementById('financeIcon').value;
+    if (!desc) { showToast('请输入消费说明'); return; }
+    if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+    store.finances.push({ desc, amount, platform, date, icon });
+    saveStore(); renderFinances(); closeModal();
+    showToast('✅ 消费已记录');
+}
+
+function editFinance(index) {
+    const f = store.finances[index];
+    const platforms = ['微信支付','支付宝','银行卡','现金','美团','淘宝','京东','拼多多','抖音','其他'];
+    const icons = ['💸','🍔','🛒','🚗','🏠','🎬','💊','📚','👔','🎁'];
+    document.getElementById('modalContent').innerHTML = `
+        <h3>✏️ 编辑消费</h3>
+        <div class="form-group"><label>消费说明</label><input type="text" id="financeModalDesc" value="${escapeHtml(f.desc)}"></div>
+        <div class="form-group"><label>金额（元）</label><input type="number" id="financeAmount" step="0.01" min="0" value="${f.amount}"></div>
+        <div class="form-group"><label>消费平台</label><select id="financePlatform">${platforms.map(p => `<option value="${p}" ${f.platform===p?'selected':''}>${p}</option>`).join('')}</select></div>
+        <div class="form-group"><label>日期</label><input type="date" id="financeDate" value="${f.date}"></div>
+        <div class="form-group"><label>分类图标</label><select id="financeIcon">${icons.map(ic => `<option value="${ic}" ${f.icon===ic?'selected':''}>${ic}</option>`).join('')}</select></div>
+        <div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" style="background:var(--c-finance);" onclick="saveEditFinance(${index})">💾 保存修改</button></div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function saveEditFinance(index) {
+    const desc = document.getElementById('financeModalDesc').value.trim();
+    const amount = parseFloat(document.getElementById('financeAmount').value);
+    const platform = document.getElementById('financePlatform').value;
+    const date = document.getElementById('financeDate').value || getToday();
+    const icon = document.getElementById('financeIcon').value;
+    if (!desc) { showToast('请输入消费说明'); return; }
+    if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+    store.finances[index] = { desc, amount, platform, date, icon };
+    saveStore(); renderFinances(); closeModal();
+    showToast('✅ 消费已更新');
+}
+
+function deleteFinance(index) {
+    store.finances.splice(index, 1); saveStore(); renderFinances(); showToast('已删除');
+}
+
+// ============ 备忘录模块 ============
+function renderNotes() {
+    const list = document.getElementById('noteList');
+    if (store.notes.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>暂无备忘录<br>在上方输入内容添加</div>';
+        return;
+    }
+    list.innerHTML = store.notes.map((n, i) => `
+        <div class="note-item ${n.done ? 'done' : ''}">
+            <div class="note-check ${n.done ? 'checked' : ''}" onclick="toggleNote(${i})">${n.done ? '✓' : ''}</div>
+            <div class="note-text" onclick="editNote(${i})" style="cursor:pointer;">${escapeHtml(n.text)}</div>
+            <span class="note-time">${n.time}</span>
+            <button class="note-del" onclick="editNote(${i})" style="font-size:14px;">✏️</button>
+            <button class="note-del" onclick="deleteNote(${i})">✕</button>
+        </div>
+    `).join('');
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function addNote() {
+    const input = document.getElementById('noteInput');
+    const text = input.value.trim();
+    if (!text) {
+        showToast('请输入内容');
+        return;
+    }
+    const now = new Date();
+    const time = `${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    store.notes.unshift({ text, done: false, time });
+    saveStore();
+    input.value = '';
+    renderNotes();
+    showToast('✅ 已添加');
+}
+
+function toggleNote(index) {
+    store.notes[index].done = !store.notes[index].done;
+    saveStore();
+    renderNotes();
+}
+
+function editNote(index) {
+    const n = store.notes[index];
+    document.getElementById('modalContent').innerHTML = `
+        <h3>✏️ 编辑备忘</h3>
+        <div class="form-group">
+            <label>内容</label>
+            <textarea id="editNoteText" rows="4" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; font-size:15px;">${escapeHtml(n.text)}</textarea>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveEditNote(${index})">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('editNoteText').focus(), 100);
+}
+
+function saveEditNote(index) {
+    const text = document.getElementById('editNoteText').value.trim();
+    if (!text) { showToast('内容不能为空'); return; }
+    store.notes[index].text = text;
+    saveStore();
+    renderNotes();
+    closeModal();
+    showToast('✅ 已更新');
+}
+
+function deleteNote(index) {
+    store.notes.splice(index, 1);
+    saveStore();
+    renderNotes();
+    showToast('已删除');
+}
+
+function resetAllData() {
+    if (confirm('确定要清空所有数据吗？\n\n这将删除：\n• 所有运动记录\n• 所有体重记录\n• 所有城市\n• 所有攻略\n• 所有穿搭\n• 所有饮食\n• 所有记账\n• 所有备忘录\n\n此操作不可恢复！\n\n建议先导出备份！')) {
+        localStorage.removeItem(STORE_KEY);
+        location.reload();
+    }
+}
+
+// ============ 数据备份与恢复 ============
+function exportData() {
+    try {
+        const data = localStorage.getItem(STORE_KEY) || '{}';
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `工作台备份_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('✅ 备份文件已下载！');
+    } catch(err) {
+        showToast('❌ 导出失败：' + err.message);
+    }
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (confirm('确定要导入备份吗？\n\n这将覆盖当前的所有数据！')) {
+                localStorage.setItem(STORE_KEY, JSON.stringify(data));
+                showToast('✅ 导入成功！正在刷新...');
+                setTimeout(() => location.reload(), 1000);
+            }
+        } catch(err) {
+            showToast('❌ 文件格式错误，请选择正确的备份文件');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // 重置input，方便再次导入
+}
+
+// ============ FAB按钮 ============
+function handleFab() {
+    const activePage = document.querySelector('.page.active').id;
+    if (activePage === 'page-exercise') {
+        // 添加自定义运动
+        addExercisePrompt();
+    } else if (activePage === 'page-travel') {
+        const activeTab = document.querySelector('.travel-tab.active').dataset.travel;
+        if (activeTab === 'guide') {
+            addGuidePrompt();
+        } else {
+            addCityPrompt(activeTab);
+        }
+    }
+}
+
+function addExercisePrompt() {
+    const icons = ['🏃','🤸','💃','🧘','🚴','🏊','🏋️','⚽','🏀','🎾','🤾','🧗','⛸️','🥋','🎯'];
+    document.getElementById('modalContent').innerHTML = `
+        <h3>➕ 添加运动项目</h3>
+        <div class="form-group">
+            <label>运动名称</label>
+            <input type="text" id="newExName" placeholder="如：散步">
+        </div>
+        <div class="form-group">
+            <label>选择图标</label>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;" id="iconPicker">
+                ${icons.map((ic, i) => `<span style="font-size:28px; padding:8px; border-radius:8px; cursor:pointer; border:2px solid ${i===0?'var(--primary)':'transparent'};" onclick="selectIcon(${i})" data-idx="${i}">${ic}</span>`).join('')}
+            </div>
+        </div>
+        <div class="form-group">
+            <label>每分钟消耗大卡</label>
+            <input type="number" id="newExCal" value="5" min="1" max="50">
+        </div>
+        <div class="form-group">
+            <label>默认时长（分钟）</label>
+            <input type="number" id="newExMin" value="30" min="1" max="300">
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveNewExercise()">💾 保存</button>
+        </div>
+    `;
+    document.getElementById('modalOverlay').classList.add('show');
+    window._selectedIcon = icons[0];
+    window._iconList = icons;
+}
+
+function selectIcon(idx) {
+    document.querySelectorAll('#iconPicker span').forEach(s => {
+        s.style.border = '2px solid transparent';
+    });
+    event.target.style.border = '2px solid var(--primary)';
+    window._selectedIcon = window._iconList[idx];
+}
+
+function saveNewExercise() {
+    const name = document.getElementById('newExName').value.trim();
+    const cal = parseInt(document.getElementById('newExCal').value);
+    const min = parseInt(document.getElementById('newExMin').value);
+    if (!name) {
+        showToast('请输入运动名称');
+        return;
+    }
+    const newId = Math.max(...store.exercises.map(e => e.id), 0) + 1;
+    store.exercises.push({
+        id: newId,
+        name,
+        icon: window._selectedIcon || '🏃',
+        caloriesPerMin: cal || 5,
+        defaultMin: min || 30
+    });
+    saveStore();
+    closeModal();
+    renderExercises();
+    showToast('✅ 运动项目已添加');
+}
+
+// ============ 初始化 ============
+loadStore();
+setupTravelTabs();
+renderExercises();
+renderWeight();
+renderCities();
+renderGuides();
+renderOutfits();
+renderDiets();
+renderFinances();
+renderNotes();
+
+// 调试：显示当前数据状态
+setTimeout(() => {
+    const debugInfo = {
+        visited: store.visitedCities.map(c => c.name),
+        planning: store.planningCities.map(c => c.name),
+        guides: store.guides.length,
+        notes: store.notes.length
+    };
+    console.log('📊 当前数据:', debugInfo);
+}, 1000);
+
+// 默认显示FAB
+document.getElementById('fab').style.display = 'flex';
+
+// 窗口大小变化时重绘图表
+window.addEventListener('resize', () => {
+    if (document.getElementById('page-weight').classList.contains('active')) {
+        drawWeightChart();
+    }
+});
+
+// ============ 注册 Service Worker（实现离线访问） ============
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('✅ 工作台已支持离线使用'))
+            .catch(err => console.log('离线模式未启用:', err));
+    });
+}
+</script>
+</body>
+</html>
