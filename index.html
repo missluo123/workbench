@@ -2472,14 +2472,32 @@ function saveEditGuide(index) {
     }
     if (saveEditGuide._busy) { showToast('正在保存中...'); return; }
     saveEditGuide._busy = true;
-    
+    const saveBtn = event && event.target ? event.target : null;
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中...'; }
+    let settledE = false;
+    let watchdogE = null;
+    function unlockEdit() {
+        if (settledE) return;
+        settledE = true;
+        if (watchdogE) clearTimeout(watchdogE);
+        saveEditGuide._busy = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 保存修改'; }
+    }
+    watchdogE = setTimeout(() => {
+        if (!settledE) {
+            finishEditGuide(index);
+            unlockEdit();
+            showToast('⚠️ 保存超时，请减少图片数量后重试');
+        }
+    }, 60000);
+
     const tags = tagsStr ? tagsStr.split(/[,，]/).map(t => t.trim()).filter(t => t) : [];
     const g = store.guides[index];
     g.title = title;
     g.city = city;
     g.content = content;
     g.tags = tags;
-    
+
     const fileInput = document.getElementById('guideImages');
     const files = (fileInput && fileInput.files) ? Array.from(fileInput.files) : [];
     if (files.length > 0) {
@@ -2490,14 +2508,15 @@ function saveEditGuide(index) {
             compressImage(file, 800, 0.7).then(data => {
                 g.images.push(data);
                 loaded++;
-                if (loaded + failed === files.length) finishEditGuide(index);
+                if (loaded + failed === files.length) { finishEditGuide(index); unlockEdit(); }
             }).catch(() => {
                 failed++;
-                if (loaded + failed === files.length) finishEditGuide(index);
+                if (loaded + failed === files.length) { finishEditGuide(index); unlockEdit(); }
             });
         });
     } else {
         finishEditGuide(index);
+        unlockEdit();
     }
 }
 
@@ -2505,7 +2524,7 @@ function finishEditGuide(index) {
     saveStore();
     renderGuides();
     closeModal();
-    saveEditGuide._busy = false;
+    // _busy 由 unlockEdit 统一管理
     showToast('✅ 攻略已更新');
 }
 
@@ -2753,11 +2772,29 @@ function saveEditOutfit(index) {
     if (!title) { showToast('请输入穿搭标题'); return; }
     if (saveEditOutfit._busy) { showToast('正在保存中...'); return; }
     saveEditOutfit._busy = true;
-    
+    const saveBtn = event && event.target ? event.target : null;
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中...'; }
+    let settledEO = false;
+    let watchdogEO = null;
+    function unlockEO() {
+        if (settledEO) return;
+        settledEO = true;
+        if (watchdogEO) clearTimeout(watchdogEO);
+        saveEditOutfit._busy = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 保存修改'; }
+    }
+    watchdogEO = setTimeout(() => {
+        if (!settledEO) {
+            finishEditOutfit(index);
+            unlockEO();
+            showToast('⚠️ 保存超时，请减少图片数量后重试');
+        }
+    }, 60000);
+
     const o = store.outfits[index];
     o.title = title;
     o.note = note;
-    
+
     const imgInput = document.getElementById('outfitImages');
     const imgFiles = (imgInput && imgInput.files) ? Array.from(imgInput.files) : [];
     if (imgFiles.length > 0) {
@@ -2768,14 +2805,15 @@ function saveEditOutfit(index) {
             compressImage(file, 800, 0.7).then(data => {
                 o.images.push(data);
                 loaded++;
-                if (loaded + failed === imgFiles.length) finishEditOutfit(index);
+                if (loaded + failed === imgFiles.length) { finishEditOutfit(index); unlockEO(); }
             }).catch(() => {
                 failed++;
-                if (loaded + failed === imgFiles.length) finishEditOutfit(index);
+                if (loaded + failed === imgFiles.length) { finishEditOutfit(index); unlockEO(); }
             });
         });
     } else {
         finishEditOutfit(index);
+        unlockEO();
     }
 }
 
@@ -2783,7 +2821,7 @@ function finishEditOutfit(index) {
     saveStore();
     renderOutfits();
     closeModal();
-    saveEditOutfit._busy = false;
+    // _busy 由 unlockEO 统一管理，避免重复
     showToast('✅ 穿搭已更新');
 }
 
@@ -2953,6 +2991,24 @@ function saveEditDiet(index) {
     if (!title) { showToast('请输入餐名'); return; }
     if (saveEditDiet._busy) { showToast('正在保存中...'); return; }
     saveEditDiet._busy = true;
+    const saveBtn = event && event.target ? event.target : null;
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中...'; }
+    let settledED = false;
+    let watchdogED = null;
+    function unlockED() {
+        if (settledED) return;
+        settledED = true;
+        if (watchdogED) clearTimeout(watchdogED);
+        saveEditDiet._busy = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 保存修改'; }
+    }
+    watchdogED = setTimeout(() => {
+        if (!settledED) {
+            finishEditDiet(index);
+            unlockED();
+            showToast('⚠️ 保存超时，请减少图片数量后重试');
+        }
+    }, 60000);
     const d = store.diets[index]; d.title = title; d.note = note;
     const periodEl = document.getElementById('dietPeriod');
     if (periodEl) d.period = periodEl.value;
@@ -2962,13 +3018,15 @@ function saveEditDiet(index) {
         if (!d.images) d.images = [];
         let pending = imgFiles.length;
         imgFiles.forEach(file => {
-            compressImage(file, 800, 0.7).then(data => { d.images.push(data); pending--; if (pending===0) finishEditDiet(index); }).catch(() => { pending--; if (pending===0) finishEditDiet(index); });
+            compressImage(file, 800, 0.7).then(data => { d.images.push(data); pending--; if (pending===0) { finishEditDiet(index); unlockED(); } }).catch(() => { pending--; if (pending===0) { finishEditDiet(index); unlockED(); } });
         });
-    } else { finishEditDiet(index); }
+    } else { finishEditDiet(index); unlockED(); }
 }
 
 function finishEditDiet(index) {
-    saveStore(); renderDiets(); closeModal(); saveEditDiet._busy = false; showToast('✅ 饮食已更新');
+    saveStore(); renderDiets(); closeModal();
+    // _busy 由 unlockED 统一管理
+    showToast('✅ 饮食已更新');
 }
 
 function deleteDiet(index) {
