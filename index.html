@@ -835,7 +835,7 @@
 
         /* ========== 拖拽排序相关 ========== */
         .drag-item {
-            touch-action: none;
+            touch-action: pan-y; /* 允许垂直滚动，拖拽时JS动态改为none */
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
@@ -844,6 +844,7 @@
         }
         .drag-item.dragging {
             opacity: 0.3;
+            touch-action: none; /* 拖拽中禁止滚动 */
             /* 不缩放，避免重叠模糊 */
         }
         .drag-item.drag-over-top {
@@ -1445,20 +1446,21 @@ function initDragSort(container, dataArray, renderFn, storeKey, periodKey) {
         }, { passive: false });
 
         item.addEventListener('touchmove', e => {
+            // 只在真正拖拽中才拦截滚动
+            if (!dragState.isDragging) {
+                // 未拖拽时，手指移动超过阈值就取消长按，让浏览器正常滚动
+                const t = e.touches[0];
+                const dx = Math.abs(t.clientX - dragState.startX);
+                const dy = Math.abs(t.clientY - dragState.startY);
+                if (dx > 10 || dy > 10) {
+                    cancelTimer();
+                }
+                return; // 不调用 preventDefault，让浏览器正常滚动
+            }
+            // 拖拽中：阻止滚动，移动 ghost
+            e.preventDefault();
             const t = e.touches[0];
-            const dx = Math.abs(t.clientX - dragState.startX);
-            const dy = Math.abs(t.clientY - dragState.startY);
-            if (dragState.longPressTimer && !dragState.isDragging && (dx > 8 || dy > 8)) {
-                cancelTimer();
-                dragState.longPressTimer = setTimeout(() => {
-                    dragState.longPressTimer = null;
-                    startDragging(item, container, dataArray, renderFn, periodKey);
-                }, 150);
-            }
-            if (dragState.isDragging) {
-                e.preventDefault();
-                moveGhost(t.clientX, t.clientY);
-            }
+            moveGhost(t.clientX, t.clientY);
         }, { passive: false });
 
         item.addEventListener('touchend', e => {
