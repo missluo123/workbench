@@ -2052,14 +2052,25 @@ function saveCity(type) {
         saveBtn.textContent = '保存中...';
     }
     
+    let settled4 = false;
+    let watchdog4 = null;
     // 释放锁的辅助函数
     function done() {
+        if (settled4) return;
+        settled4 = true;
+        if (watchdog4) clearTimeout(watchdog4);
         saveCity._busy = false;
         if (saveBtn) {
             saveBtn.disabled = false;
             saveBtn.textContent = '💾 保存';
         }
     }
+    watchdog4 = setTimeout(() => {
+        if (!settled4) {
+            done();
+            showToast('⚠️ 保存超时，请重试');
+        }
+    }, 60000);
     
     const fileInput = document.getElementById('cityImage');
     if (fileInput && fileInput.files && fileInput.files[0]) {
@@ -2094,10 +2105,19 @@ function saveCity(type) {
 // 图片压缩函数：使用 Canvas 重绘
 function compressImage(file, maxWidth, quality) {
     return new Promise((resolve, reject) => {
+        let settled = false;
+        const timeout = setTimeout(() => {
+            if (!settled) {
+                settled = true;
+                reject(new Error('图片处理超时'));
+            }
+        }, 15000); // 15秒超时
+
         const reader = new FileReader();
         reader.onload = function(e) {
             const img = new Image();
             img.onload = function() {
+                if (settled) return;
                 let width = img.width;
                 let height = img.height;
                 if (width > maxWidth) {
@@ -2111,15 +2131,29 @@ function compressImage(file, maxWidth, quality) {
                 ctx.drawImage(img, 0, 0, width, height);
                 try {
                     const data = canvas.toDataURL('image/jpeg', quality);
+                    settled = true;
+                    clearTimeout(timeout);
                     resolve(data);
                 } catch(err) {
+                    settled = true;
+                    clearTimeout(timeout);
                     reject(err);
                 }
             };
-            img.onerror = reject;
+            img.onerror = () => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
+                reject(new Error('图片解码失败'));
+            };
             img.src = e.target.result;
         };
-        reader.onerror = reject;
+        reader.onerror = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            reject(new Error('文件读取失败'));
+        };
         reader.readAsDataURL(file);
     });
 }
@@ -2319,13 +2353,25 @@ function saveGuide() {
         saveBtn.disabled = true;
         saveBtn.textContent = '保存中...';
     }
+    let settled = false;
+    let watchdog = null;
     function done() {
+        if (settled) return;
+        settled = true;
+        if (watchdog) clearTimeout(watchdog);
         saveGuide._busy = false;
         if (saveBtn) {
             saveBtn.disabled = false;
             saveBtn.textContent = '💾 保存';
         }
     }
+    // 超时保护：60秒后强制重置，避免卡死
+    watchdog = setTimeout(() => {
+        if (!settled) {
+            done();
+            showToast('⚠️ 保存超时，请减少图片数量或缩小图片后重试');
+        }
+    }, 60000);
     
     const tags = tagsStr ? tagsStr.split(/[,，]/).map(t => t.trim()).filter(t => t) : [];
     const fileInput = document.getElementById('guideImages');
@@ -2572,13 +2618,24 @@ function saveOutfit() {
         saveBtn.textContent = '保存中...';
     }
     
+    let settled2 = false;
+    let watchdog2 = null;
     function done() {
+        if (settled2) return;
+        settled2 = true;
+        if (watchdog2) clearTimeout(watchdog2);
         saveOutfit._busy = false;
         if (saveBtn) {
             saveBtn.disabled = false;
             saveBtn.textContent = '💾 保存';
         }
     }
+    watchdog2 = setTimeout(() => {
+        if (!settled2) {
+            done();
+            showToast('⚠️ 保存超时，请减少图片数量后重试');
+        }
+    }, 60000);
     
     const imgInput = document.getElementById('outfitImages');
     const videoInput = document.getElementById('outfitVideo');
@@ -2833,7 +2890,21 @@ function saveDiet() {
     saveDiet._busy = true;
     const saveBtn = event && event.target ? event.target : null;
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中...'; }
-    function done() { saveDiet._busy = false; if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 保存'; } }
+    let settled3 = false;
+    let watchdog3 = null;
+    function done() {
+        if (settled3) return;
+        settled3 = true;
+        if (watchdog3) clearTimeout(watchdog3);
+        saveDiet._busy = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 保存'; }
+    }
+    watchdog3 = setTimeout(() => {
+        if (!settled3) {
+            done();
+            showToast('⚠️ 保存超时，请减少图片数量后重试');
+        }
+    }, 60000);
     
     const now = new Date();
     const time = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
