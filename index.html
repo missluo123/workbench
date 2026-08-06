@@ -647,12 +647,13 @@
 
         .note-item {
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
+            flex-direction: column;
+            gap: 8px;
             padding: 12px 14px;
             background: var(--card-bg);
             border-radius: 8px;
             box-shadow: var(--shadow);
+            margin-bottom: 8px;
         }
 
         .note-item.done {
@@ -661,6 +662,32 @@
 
         .note-item.done .note-text {
             text-decoration: line-through;
+        }
+
+        .note-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .note-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text);
+            word-break: break-word;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .note-time {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-left: auto;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 6px;
         }
 
         .note-check {
@@ -707,6 +734,8 @@
             padding: 0 4px;
             opacity: 0.4;
         }
+
+        /* 旧 .note-text/.note-time 已被上方新结构覆盖 */
 
         .note-del:active {
             opacity: 1;
@@ -3311,11 +3340,15 @@ function renderNotes() {
     }
     list.innerHTML = store.notes.map((n, i) => `
         <div class="note-item ${n.done ? 'done' : ''}">
-            <div class="note-check ${n.done ? 'checked' : ''}" onclick="toggleNote(${i})">${n.done ? '✓' : ''}</div>
+            <div class="note-header">
+                <div class="note-check ${n.done ? 'checked' : ''}" onclick="toggleNote(${i})">${n.done ? '✓' : ''}</div>
+                <span class="note-time">${n.time}</span>
+                <div class="note-actions">
+                    <button class="note-del" onclick="editNote(${i})" style="font-size:14px;">✏️</button>
+                    <button class="note-del" onclick="deleteNote(${i})">✕</button>
+                </div>
+            </div>
             <div class="note-text" onclick="editNote(${i})" style="cursor:pointer;">${escapeHtml(n.text)}</div>
-            <span class="note-time">${n.time}</span>
-            <button class="note-del" onclick="editNote(${i})" style="font-size:14px;">✏️</button>
-            <button class="note-del" onclick="deleteNote(${i})">✕</button>
         </div>
     `).join('');
 }
